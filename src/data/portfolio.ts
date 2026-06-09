@@ -41,6 +41,25 @@ export const PORTFOLIO_DATA = {
   },
   projects: [
     {
+      id: "luxe-moto",
+      title: "Luxe Moto",
+      category: "Automotive UI/UX Concept",
+      year: "2026",
+      tagline: "A premium automotive web experience crafted to bring luxury, performance, and trust into a modern digital environment.",
+      description: "Designed in Figma, the project explores how thoughtful user experience and elegant visual design can transform the way customers interact with luxury vehicle brands online.",
+      imageUrl: "https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?auto=format&fit=crop&w=1200&q=80",
+      details: [
+        "Premium automotive website design",
+        "Luxury-inspired visual language",
+        "High-end user experience design",
+        "Responsive interface exploration",
+        "Customer-centric navigation flow",
+        "Modern design system approach"
+      ],
+      technologies: ["Figma", "UI Design", "UX Design", "User Flows", "Wireframing", "Prototyping"],
+      projectUrl: "https://luxemoto.in/"
+    },
+    {
       id: "neeli",
       title: "Neeli",
       category: "Experimental Storytelling Platform",

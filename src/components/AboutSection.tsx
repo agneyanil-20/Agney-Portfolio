@@ -5,10 +5,18 @@
 
 import { motion } from "motion/react";
 import { PORTFOLIO_DATA } from "../data/portfolio";
-import { MapPin } from "lucide-react";
+import { MapPin, Instagram, MessageSquare, BookOpen } from "lucide-react";
 
 export default function AboutSection() {
   const { name, role, location, coordinates, bioLong, philosophy, skills, timeline } = PORTFOLIO_DATA.about;
+
+  // Calculate estimated reading time based on 200 WPM
+  const editorialText = [
+    ...bioLong,
+    ...philosophy.flatMap(p => [p.title, p.description])
+  ].join(" ");
+  const wordCount = editorialText.trim().split(/\s+/).filter(Boolean).length;
+  const readingTime = Math.ceil(wordCount / 200);
 
   return (
     <section 
@@ -27,9 +35,12 @@ export default function AboutSection() {
               / THE PROFILE & PHILOSOPHY
             </div>
           </div>
-          <div className="text-right font-mono text-zinc-400 text-xs md:text-sm flex flex-col md:items-end">
-            <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5 text-[#FF3B30]" /> {location}</span>
+          <div className="text-right font-mono text-zinc-400 text-xs md:text-sm flex flex-col md:items-end gap-1">
+            <span className="flex items-center gap-1 justify-end"><MapPin className="w-3.5 h-3.5 text-[#FF3B30]" /> {location}</span>
             <span className="text-zinc-600">{coordinates}</span>
+            <span className="text-zinc-500 text-[10px] tracking-wider uppercase flex items-center gap-1.5 mt-1 justify-end">
+              <BookOpen className="w-3.5 h-3.5 text-[#FF3B30]" /> EST. READING TIME // {readingTime} MIN
+            </span>
           </div>
         </div>
 
@@ -63,7 +74,7 @@ export default function AboutSection() {
             </motion.div>
 
             {/* Quick Stats Grid */}
-            <div className="grid grid-cols-2 gap-4 border-t border-zinc-800 pt-8 font-mono text-xs">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 border-t border-zinc-800 pt-8 font-mono text-xs">
               <div className="flex flex-col gap-1">
                 <span className="text-zinc-500 uppercase tracking-wider text-[10px]">NAME</span>
                 <span className="text-white text-sm font-medium">{name}</span>
@@ -71,6 +82,28 @@ export default function AboutSection() {
               <div className="flex flex-col gap-1">
                 <span className="text-zinc-500 uppercase tracking-wider text-[10px]">ROLE</span>
                 <span className="text-white text-sm font-medium">{role}</span>
+              </div>
+              <div className="flex flex-col gap-1">
+                <span className="text-zinc-500 uppercase tracking-wider text-[10px]">INSTAGRAM</span>
+                <a 
+                  href="https://www.instagram.com/agney__anil_kallil?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-[#FF3B30] hover:text-[#ff5c54] text-sm font-medium transition-colors duration-200 flex items-center gap-1 leading-tight focus:outline-none"
+                >
+                  <Instagram className="w-3.5 h-3.5" /> @agney__anil_kallil
+                </a>
+              </div>
+              <div className="flex flex-col gap-1">
+                <span className="text-zinc-500 uppercase tracking-wider text-[10px]">WHATSAPP</span>
+                <a 
+                  href="https://wa.me/917907939730" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-[#FF3B30] hover:text-[#ff5c54] text-sm font-medium transition-colors duration-200 flex items-center gap-1 leading-tight focus:outline-none"
+                >
+                  <MessageSquare className="w-3.5 h-3.5" /> Message me
+                </a>
               </div>
             </div>
           </div>

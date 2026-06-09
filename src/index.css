@@ -49,3 +49,250 @@ html, body, #root {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* ==========================================================
+   BRUTALIST HIGH-CONTRAST LIGHT MODE INVERSION
+   ========================================================== */
+html.light,
+html.light body,
+html.light #root,
+html.light #app-canvas {
+  background-color: #f7f7f9 !important; /* Soft Scandinavian paper white baseline */
+  color: #121212 !important;
+}
+
+html.light .bg-black:not(.keep-dark):not(.theme-toggle) {
+  background-color: #f7f7f9 !important;
+}
+
+html.light .bg-zinc-950:not(.keep-dark):not(.theme-toggle),
+html.light .bg-zinc-900:not(.keep-dark):not(.theme-toggle),
+html.light .bg-[#020202]:not(.keep-dark):not(.theme-toggle),
+html.light .bg-[#030303]:not(.keep-dark):not(.theme-toggle),
+html.light .bg-[#050505]:not(.keep-dark):not(.theme-toggle),
+html.light .bg-[#080808]:not(.keep-dark):not(.theme-toggle),
+html.light .bg-[#0c0c0c]:not(.keep-dark):not(.theme-toggle) {
+  background-color: #ffffff !important; /* Crisp components */
+}
+
+html.light .bg-zinc-950\/50:not(.keep-dark),
+html.light .bg-zinc-950\/40:not(.keep-dark) {
+  background-color: rgba(255, 255, 255, 0.8) !important;
+}
+
+html.light .text-white:not(.keep-dark):not(.theme-toggle):not(.inline-flex) {
+  color: #121212 !important;
+}
+
+html.light .text-zinc-300 {
+  color: #27272a !important; /* Deep charcoal slate */
+}
+
+html.light .text-zinc-400 {
+  color: #52525b !important;
+}
+
+html.light .text-zinc-500 {
+  color: #71717a !important;
+}
+
+html.light .text-zinc-600 {
+  color: #a1a1aa !important;
+}
+
+html.light .text-zinc-700 {
+  color: #d4d4d8 !important;
+}
+
+/* Borders conversion to elegant light-gray structural wireframes */
+html.light .border-zinc-950,
+html.light .border-zinc-900,
+html.light .border-zinc-900\/60 {
+  border-color: #d4d4d8 !important;
+}
+
+html.light .border-zinc-800 {
+  border-color: #a1a1aa !important; /* Visual separation lines */
+}
+
+html.light .border-white\/40 {
+  border-color: rgba(0, 0, 0, 0.35) !important;
+}
+
+html.light .text-white\/50 {
+  color: rgba(0, 0, 0, 0.6) !important;
+}
+
+/* ==========================================================
+   STATE-OF-THE-ART DETAILED LIGHT MODE INTERACTIVE OVERRIDES
+   ========================================================== */
+
+/* Absolute protection to preserve exact dark styling for theme toggle & dark-protected modules */
+.keep-dark,
+html.light .keep-dark,
+.theme-toggle,
+html.light .theme-toggle {
+  background-color: #0c0c0c !important;
+  color: #ffffff !important;
+  border-color: #27272a !important;
+}
+
+/* Ensure child text and icon styles are perfectly white inside dark elements in both light and dark modes */
+.keep-dark *,
+html.light .keep-dark *,
+.theme-toggle *,
+html.light .theme-toggle *,
+html.light button.inline-flex,
+html.light button.inline-flex *,
+html.light a.inline-flex,
+html.light a.inline-flex * {
+  color: #ffffff !important;
+}
+
+/* High Contrast CTA Action Buttons & Links */
+html.light button.inline-flex,
+html.light a.inline-flex,
+html.light .bg-zinc-950.text-white,
+html.light .bg-zinc-950.hover\:bg-black {
+  background-color: #121212 !important; /* Premium solid brutalist black button */
+  border-color: #121212 !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+}
+
+html.light button.inline-flex:hover, 
+html.light a.inline-flex:hover,
+html.light .bg-zinc-950.text-white:hover,
+html.light .bg-zinc-950.hover\:bg-black:hover,
+html.light button.inline-flex:hover *, 
+html.light a.inline-flex:hover *,
+html.light .bg-zinc-950.text-white:hover *,
+html.light .bg-zinc-950.hover\:bg-black:hover * {
+  color: #ffffff !important;
+}
+
+html.light button.inline-flex:hover, 
+html.light a.inline-flex:hover,
+html.light .bg-zinc-950.text-white:hover,
+html.light .bg-zinc-950.hover\:bg-black:hover {
+  background-color: #FF3B30 !important; /* Vibrant Red Highlight on hover */
+  border-color: #FF3B30 !important;
+  box-shadow: 0 4px 18px rgba(255, 59, 48, 0.25);
+}
+
+/* Round Slider Controllers & Lightbox Modal Close button */
+html.light .rounded-full.bg-zinc-950,
+html.light button.p-3.border,
+html.light button.p-2\.5.bg-zinc-950 {
+  background-color: #ffffff !important;
+  border-color: #121212 !important;
+  color: #121212 !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+html.light .rounded-full.bg-zinc-950 *,
+html.light button.p-3.border *,
+html.light button.p-2\.5.bg-zinc-950 * {
+  color: #121212 !important;
+}
+
+html.light .rounded-full.bg-zinc-950:hover,
+html.light button.p-3.border:hover,
+html.light button.p-2\.5.bg-zinc-950:hover {
+  background-color: #121212 !important;
+  border-color: #121212 !important;
+}
+
+html.light .rounded-full.bg-zinc-950:hover *,
+html.light button.p-3.border:hover *,
+html.light button.p-2\.5.bg-zinc-950:hover * {
+  color: #ffffff !important;
+}
+
+/* Creative Coding Playground Lab Menu Selectors */
+html.light button.w-full.text-left {
+  background-color: #ffffff !important;
+  border-color: #d4d4d8 !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+}
+
+html.light button.w-full.text-left.border-\[\#FF3B30\] {
+  border-color: #FF3B30 !important;
+  box-shadow: 0 6px 20px rgba(255, 59, 48, 0.06);
+}
+
+html.light button.w-full.text-left.border-zinc-900 {
+  border-color: #d4d4d8 !important;
+  color: #3f3f46 !important;
+}
+
+html.light button.w-full.text-left.border-zinc-900:hover {
+  border-color: #121212 !important;
+  color: #121212 !important;
+}
+
+/* Form text input elements in Playground */
+html.light input[type="text"],
+html.light input.bg-zinc-950 {
+  background-color: #ffffff !important;
+  border-color: #a1a1aa !important;
+  color: #121212 !important;
+}
+
+html.light input[type="text"]:focus,
+html.light input.bg-zinc-950:focus {
+  border-color: #FF3B30 !important;
+}
+
+/* Custom Text utilities for readability in Light Mode */
+html.light .text-zinc-650 {
+  color: #4b5563 !important;
+}
+
+/* Adaptive hovered states */
+html.light .hover\:bg-zinc-950:hover {
+  background-color: #ffffff !important;
+}
+
+html.light .hover\:bg-black:hover {
+  background-color: #121212 !important;
+  color: #ffffff !important;
+}
+
+html.light .hover\:border-zinc-800:hover {
+  border-color: #121212 !important;
+}
+
+html.light .hover\:border-white:hover {
+  border-color: #121212 !important;
+}
+
+html.light .hover\:text-white:hover {
+  color: #121212 !important;
+}
+
+/* Lab modules and coordinate spaces double inversion (preserves red colors perfectly) */
+html.light canvas,
+html.light #explorations svg {
+  filter: invert(1) hue-rotate(180deg) !important;
+}
+
+/* Analog Grain style conversion */
+html.light .fixed.inset-0 svg {
+  filter: invert(1) !important;
+}
+
+/* Light scrollbar track & thumb settings */
+html.light ::-webkit-scrollbar-track {
+  background: #f7f7f9 !important;
+}
+html.light ::-webkit-scrollbar-thumb {
+  background: #e4e4e7 !important;
+}
+html.light ::-webkit-scrollbar-thumb:hover {
+  background: #FF3B30 !important;
+}
+
+/* Highlights typography style corrections */
+html.light li span.text-zinc-400 {
+  color: #3f3f46 !important;
+}

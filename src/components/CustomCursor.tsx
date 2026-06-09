@@ -26,9 +26,48 @@ export default function CustomCursor() {
     }
 
     const moveCursor = (e: MouseEvent) => {
-      cursorX.set(e.clientX);
-      cursorY.set(e.clientY);
       if (!isVisible) setIsVisible(true);
+
+      const target = e.target as HTMLElement | null;
+      const interactiveEl = target 
+        ? (target.closest("a, button, [data-cursor], [role='button'], .cursor-pointer") as HTMLElement) 
+        : null;
+
+      if (interactiveEl) {
+        setIsHovered(true);
+        const type = interactiveEl.getAttribute("data-cursor") || 
+                     (interactiveEl.tagName === "A" || interactiveEl.tagName === "BUTTON" ? "interactive" : "pointer");
+        setHoverType(type);
+
+        // Calculate magnetic sticky coordinates
+        const rect = interactiveEl.getBoundingClientRect();
+        
+        // Only trigger magnetic pull if the element is of standard interactive size (e.g., width < 320px and height < 200px)
+        const isSmallInteractive = rect.width < 320 && rect.height < 200;
+
+        if (isSmallInteractive) {
+          // Center of the target element
+          const centerX = rect.left + rect.width / 2;
+          const centerY = rect.top + rect.height / 2;
+
+          // Magnetic pull factor: 55% pull creates a solid "sticky" pull effect
+          const pullFactor = 0.55;
+          const targetX = e.clientX + (centerX - e.clientX) * pullFactor;
+          const targetY = e.clientY + (centerY - e.clientY) * pullFactor;
+
+          cursorX.set(targetX);
+          cursorY.set(targetY);
+        } else {
+          cursorX.set(e.clientX);
+          cursorY.set(e.clientY);
+        }
+      } else {
+        setIsHovered(false);
+        setHoverType(null);
+
+        cursorX.set(e.clientX);
+        cursorY.set(e.clientY);
+      }
     };
 
     const handleMouseLeave = () => {
@@ -39,29 +78,14 @@ export default function CustomCursor() {
       setIsVisible(true);
     };
 
-    // Detect if hovering over interactive tokens
-    const handleMouseOver = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      if (target && (target.tagName === "A" || target.tagName === "BUTTON" || target.closest("[data-cursor]"))) {
-        setIsHovered(true);
-        const type = target.closest("[data-cursor]")?.getAttribute("data-cursor") || "pointer";
-        setHoverType(type);
-      } else {
-        setIsHovered(false);
-        setHoverType(null);
-      }
-    };
-
     window.addEventListener("mousemove", moveCursor);
     document.addEventListener("mouseleave", handleMouseLeave);
     document.addEventListener("mouseenter", handleMouseEnter);
-    window.addEventListener("mouseover", handleMouseOver);
 
     return () => {
       window.removeEventListener("mousemove", moveCursor);
       document.removeEventListener("mouseleave", handleMouseLeave);
       document.removeEventListener("mouseenter", handleMouseEnter);
-      window.removeEventListener("mouseover", handleMouseOver);
     };
   }, [cursorX, cursorY, isVisible]);
 
