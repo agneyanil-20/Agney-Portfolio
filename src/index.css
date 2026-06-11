@@ -296,3 +296,25 @@ html.light ::-webkit-scrollbar-thumb:hover {
 html.light li span.text-zinc-400 {
   color: #3f3f46 !important;
 }
+
+/* ==========================================================
+   VIRTUAL MOUSE POINTER EFFECTS
+   ========================================================== */
+
+/* programmatically hide native OS cursor when hand is detected on active tracking */
+.hand-tracking-active,
+.hand-tracking-active * {
+  cursor: none !important;
+}
+
+/* Programmatically-triggered hover state simulation for interactive nodes */
+.hovered,
+.spatial-hover {
+  outline: 2px solid #FF3B30 !important;
+  outline-offset: 2px;
+  transform: scale(1.03) !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  filter: brightness(1.15) !important;
+  box-shadow: 0 0 16px rgba(255, 59, 48, 0.45) !important;
+}
+

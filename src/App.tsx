@@ -11,6 +11,7 @@ import PhotographySection from "./components/PhotographySection";
 import ExperimentsSection from "./components/ExperimentsSection";
 import CustomCursor from "./components/CustomCursor";
 import NoiseBackground from "./components/NoiseBackground";
+import HandScrollNav from "./components/HandScrollNav";
 
 const SUN_PIXELS = [
   0, 0, 1, 0, 0, 1, 0, 0,
@@ -75,6 +76,9 @@ export default function App() {
 
       {/* Modern Cursor Tracking Coordinates system */}
       <CustomCursor />
+
+      {/* Floating Hand Scroll Touchless Navigation controller */}
+      <HandScrollNav />
 
       {/* Subtle Floating High-contrast Brutalist Theme Toggle */}
       <div className="fixed top-6 right-6 md:top-8 md:right-12 z-50">

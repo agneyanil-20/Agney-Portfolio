@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hand Navigation - MediaPipe Scroll Engine Demo</title>
+  
+  <!-- Tailwind CSS CDN for elegant modern layout -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Elegant Inter and JetBrains Mono Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;650;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      scroll-behavior: smooth;
+    }
+    .font-mono-custom {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    /* Pixelated retro scanning lines for visual tech overlay */
+    .scanlines {
+      background: linear-gradient(
+        rgba(18, 16, 16, 0) 50%, 
+        rgba(0, 0, 0, 0.25) 50%
+      ), linear-gradient(
+        90deg, 
+        rgba(255, 0, 0, 0.06), 
+        rgba(0, 255, 0, 0.02), 
+        rgba(0, 0, 255, 0.06)
+      );
+      background-size: 100% 4px, 6px 100%;
+    }
+  </style>
+</head>
+<body class="bg-[#0a0a0c] text-zinc-100 selection:bg-[#FF3B30] selection:text-white min-h-screen relative overflow-x-hidden">
+
+  <!-- Top Brutalist Header Header -->
+  <header class="fixed top-0 left-0 w-full z-40 bg-[#0c0c0e]/80 backdrop-blur-md border-b border-zinc-900 px-6 py-4 flex justify-between items-center">
+    <div class="flex items-center gap-3">
+      <div class="w-2.5 h-2.5 bg-[#FF3B30] rounded-none animate-pulse"></div>
+      <span class="font-mono-custom text-xs uppercase tracking-widest text-zinc-400">HAND_NAV // CTRL_v1.0</span>
+    </div>
+    
+    <div class="flex items-center gap-4">
+      <a href="/" class="font-mono-custom text-[11px] tracking-wider text-zinc-400 hover:text-[#FF3B30] transition-colors border border-zinc-800 hover:border-[#FF3B30] px-3 py-1.5 bg-[#0e0e11]">
+        ← RETURN TO PORTFOLIO
+      </a>
+      <button 
+        id="toggle-nav-btn" 
+        class="font-mono-custom text-[11px] tracking-wider bg-[#FF3B30] text-white hover:bg-white hover:text-black transition-colors px-4 py-1.5 font-medium select-none cursor-pointer"
+      >
+        STOP HAND NAVIGATION
+      </button>
+    </div>
+  </header>
+
+  <!-- Left Indicator Bar displaying real-time hand-scroll state -->
+  <div class="fixed left-6 top-32 z-30 hidden lg:flex flex-col gap-6">
+    <div class="border border-zinc-900 bg-[#0e0e11]/90 p-4 w-60 backdrop-blur-sm">
+      <span class="font-mono-custom text-[10px] text-zinc-500 uppercase tracking-widest block mb-2">System Telemetry</span>
+      <div class="space-y-2 text-xs">
+        <div class="flex justify-between border-b border-zinc-900/50 pb-1">
+          <span class="text-zinc-500">Engine State:</span>
+          <span id="tel-status" class="font-mono-custom text-amber-500">Initializing...</span>
+        </div>
+        <div class="flex justify-between border-b border-zinc-900/50 pb-1">
+          <span class="text-zinc-500">Wrist Y pos:</span>
+          <span id="tel-y" class="font-mono-custom text-zinc-300">--</span>
+        </div>
+        <div class="flex justify-between border-b border-zinc-900/50 pb-1">
+          <span class="text-zinc-500">Velocity:</span>
+          <span id="tel-velocity" class="font-mono-custom text-zinc-300">0.00</span>
+        </div>
+        <div class="flex justify-between border-b border-zinc-900/50 pb-1">
+          <span class="text-zinc-500">Direction:</span>
+          <span id="tel-direction" class="font-mono-custom text-zinc-300">STATIONARY</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-zinc-500">FPS:</span>
+          <span id="tel-fps" class="font-mono-custom text-zinc-300">--</span>
+        </div>
+      </div>
+      
+      <!-- Visualization graph of movement threshold -->
+      <div class="mt-4 pt-4 border-t border-zinc-900">
+        <span class="font-mono-custom text-[10px] text-zinc-500 uppercase tracking-widest block mb-2">Live Vector Feed</span>
+        <div class="relative h-16 bg-black border border-zinc-900 overflow-hidden flex items-center justify-center">
+          <div id="vector-bar" class="absolute left-1/2 bottom-0 w-2.5 bg-[#FF3B30] transition-all duration-75" style="height: 0%; transform: translateX(-50%);"></div>
+          <div class="absolute w-full h-[1px] bg-zinc-800 left-0 top-1/2 pointer-events-none"></div>
+          <div class="absolute text-[8px] font-mono-custom text-zinc-650 pointer-events-none left-1 top-0.5">UP SCROLL LIMIT</div>
+          <div class="absolute text-[8px] font-mono-custom text-zinc-650 pointer-events-none left-1 bottom-0.5">DOWN SCROLL LIMIT</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Interactive Demo Sections -->
+  <main class="w-full flex flex-col">
+    
+    <!-- Hero / Home Section -->
+    <section id="home" class="min-h-screen w-full flex flex-col justify-center px-6 md:px-16 lg:px-32 pt-24 border-b border-zinc-900 relative">
+      <div class="max-w-4xl space-y-8">
+        <div class="inline-block border border-[#FF3B30]/30 bg-[#FF3B30]/5 text-[#FF3B30] font-mono-custom text-xs px-3 py-1 uppercase tracking-wider">
+          MediaPipe Touchless scroll experiment
+        </div>
+        <h1 class="text-4xl md:text-7xl lg:text-8xl font-extrabold tracking-tighter uppercase leading-none">
+          NAVIGATE VIA <br>
+          <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#FF3B30] to-orange-500">GESTURE SHAPE</span>
+        </h1>
+        <p class="text-zinc-400 text-base md:text-xl font-light leading-relaxed max-w-2xl">
+          Move your hand up or down in front of your camera to fluidly navigate this page. Discover a highly responsive, zero-latency touchless desktop scrolling engine powered by state-of-the-art on-device computer vision.
+        </p>
+        
+        <!-- Live Quickstart Instruction -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 pt-8 font-mono-custom text-xs">
+          <div class="border border-zinc-900 bg-[#0d0d10] p-4 space-y-2">
+            <span class="text-[#FF3B30] font-bold block">[ 01 ]</span>
+            <span class="text-zinc-200 uppercase tracking-wider block">Grant Permission</span>
+            <span class="text-zinc-500 leading-normal block">Allow camera permission in the responsive popups. It runs 100% locally on your CPU/GPU.</span>
+          </div>
+          <div class="border border-zinc-900 bg-[#0d0d10] p-4 space-y-2">
+            <span class="text-[#FF3B30] font-bold block">[ 02 ]</span>
+            <span class="text-zinc-200 uppercase tracking-wider block">Raise Your Hand</span>
+            <span class="text-zinc-500 leading-normal block">Raise your hand inside the camera feed bounds. Watch the green landmarks align in real time.</span>
+          </div>
+          <div class="border border-zinc-900 bg-[#0d0d10] p-4 space-y-2">
+            <span class="text-[#FF3B30] font-bold block">[ 03 ]</span>
+            <span class="text-zinc-200 uppercase tracking-wider block">Move Up & Down</span>
+            <span class="text-zinc-500 leading-normal block">Push up (above threshold) to glide down the page, pull down to scroll smoothly back to top.</span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Scroll down indicator -->
+      <div class="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 animate-bounce">
+        <span class="font-mono-custom text-[10px] text-zinc-500 tracking-widest uppercase">Scroll down via Hand</span>
+        <svg class="w-4 h-4 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
+      </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about" class="min-h-screen w-full flex flex-col justify-center px-6 md:px-16 lg:px-32 border-b border-zinc-900 relative bg-[#0c0c0e]">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+        <div class="lg:col-span-7 space-y-6">
+          <span class="font-mono-custom text-xs text-[#FF3B30] tracking-widest uppercase block">// ARCHITECTURE DEEPDIVE</span>
+          <h2 class="text-3xl md:text-5xl font-extrabold uppercase tracking-tight">HOW THE ENGINE TRANSLATES MOVEMENT</h2>
+          <p class="text-zinc-400 leading-relaxed font-light">
+            Behind the scenes, we load Google's <code>@mediapipe/tasks-vision</code> libraries from JSDelivr CDN. Rather than tracking random pixels, MediaPipe tracks 21 individual 3D hand joints.
+          </p>
+          <p class="text-zinc-400 leading-relaxed font-light">
+            Our engine measures the <strong>normalized delta vector</strong> of your wrist joint (Landmark 0) and finger tips. By storing a continuous window of coordinate packets, we extract the instantaneous vertical hand velocity, bypassing micro-jitters through low-pass exponential filters.
+          </p>
+          
+          <!-- Code Preview block -->
+          <div class="bg-black p-4 border border-zinc-900 rounded font-mono-custom text-[11px] text-zinc-400 space-y-1 overflow-x-auto">
+            <div class="text-[#FF3B30]">// Math Logic Tweak Window</div>
+            <div>const deltaY = currentY - previousY;</div>
+            <div>const smoothedVelocity = (deltaY * filterAlpha) + (lastVelocity * (1 - filterAlpha));</div>
+            <div>if (Math.abs(smoothedVelocity) > SCROLL_THRESHOLD) {</div>
+            <div class="text-white">&nbsp;&nbsp;window.scrollBy({ top: smoothedVelocity * SPEED_SCALE, behavior: "smooth" });</div>
+            <div>}</div>
+          </div>
+        </div>
+        
+        <div class="lg:col-span-5 border border-zinc-850 p-6 bg-[#08080a] space-y-6">
+          <span class="font-mono-custom text-[10px] text-zinc-500 tracking-wider block uppercase">SWIPE & RESET CONFIGURATION</span>
+          
+          <!-- Real-time interactive controls to play with variables -->
+          <div class="space-y-4">
+            <div>
+              <div class="flex justify-between text-xs font-mono-custom mb-1 text-zinc-400">
+                <span>SWIPE SCROLL DISTANCE (PX):</span>
+                <span id="lbl-speed">450</span>
+              </div>
+              <input type="range" id="input-speed" min="200" max="1000" step="50" value="450" class="w-full h-1 bg-zinc-800 rounded-none appearance-none cursor-pointer accent-[#FF3B30]">
+            </div>
+            
+            <div>
+              <div class="flex justify-between text-xs font-mono-custom mb-1 text-zinc-400">
+                <span>SWIPE THRESHOLD (DELTA Y):</span>
+                <span id="lbl-threshold">0.15</span>
+              </div>
+              <input type="range" id="input-threshold" min="0.05" max="0.35" step="0.01" value="0.15" class="w-full h-1 bg-zinc-800 rounded-none appearance-none cursor-pointer accent-[#FF3B30]">
+            </div>
+            
+            <div>
+              <div class="flex justify-between text-xs font-mono-custom mb-1 text-zinc-400">
+                <span>RESET COOLDOWN (MS):</span>
+                <span id="lbl-alpha">750</span>
+              </div>
+              <input type="range" id="input-alpha" min="300" max="1500" step="50" value="750" class="w-full h-1 bg-zinc-800 rounded-none appearance-none cursor-pointer accent-[#FF3B30]">
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Projects Section -->
+    <section id="projects" class="min-h-screen w-full flex flex-col justify-center px-6 md:px-16 lg:px-32 relative bg-[#070709]">
+      <div class="space-y-12">
+        <div class="flex justify-between items-end border-b border-zinc-900 pb-6">
+          <div class="space-y-2">
+            <span class="font-mono-custom text-xs text-[#FF3B30] tracking-widest uppercase block">// DISCOVER INNOVATION</span>
+            <h2 class="text-3xl md:text-5xl font-extrabold uppercase">INTERACTIVE WORKS</h2>
+          </div>
+          <span class="font-mono-custom text-zinc-600 hidden md:block">PAGE 03 / / HAND STACK</span>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <!-- Col 1 -->
+          <div class="border border-zinc-900 bg-black hover:border-zinc-700 transition-all p-6 space-y-4 group">
+            <div class="aspect-video bg-zinc-950 flex items-center justify-center font-mono-custom text-zinc-650 font-bold group-hover:text-[#FF3B30] transition-colors border border-zinc-900">
+              [ MOTION SENSOR ]
+            </div>
+            <h3 class="font-bold text-lg uppercase">Zero touch slide-decks</h3>
+            <p class="text-zinc-500 text-sm leading-relaxed">
+              Convert page scrolling mechanics into presentation clickers. Swipe left or right to seamlessly advance keynotes without clicking down.
+            </p>
+          </div>
+          
+          <!-- Col 2 -->
+          <div class="border border-zinc-900 bg-black hover:border-zinc-700 transition-all p-6 space-y-4 group">
+            <div class="aspect-video bg-zinc-950 flex items-center justify-center font-mono-custom text-zinc-650 font-bold group-hover:text-[#FF3B30] transition-colors border border-zinc-900">
+              [ REALTIME SKELETON ]
+            </div>
+            <h3 class="font-bold text-lg uppercase">Precision Canvas Drawing</h3>
+            <p class="text-zinc-500 text-sm leading-relaxed">
+              Unlock fingertip-based canvas paintbrush systems. Emits pixel-perfect custom coordinate frames directly to HTML Canvases dynamically.
+            </p>
+          </div>
+          
+          <!-- Col 3 -->
+          <div class="border border-zinc-900 bg-black hover:border-zinc-700 transition-all p-6 space-y-4 group">
+            <div class="aspect-video bg-zinc-950 flex items-center justify-center font-mono-custom text-zinc-650 font-bold group-hover:text-[#FF3B30] transition-colors border border-zinc-900">
+              [ ACCESSIBILITY ENG ]
+            </div>
+            <h3 class="font-bold text-lg uppercase">Adaptive Page Glides</h3>
+            <p class="text-zinc-500 text-sm leading-relaxed">
+              Designed explicitly with users with motor limitations in mind. High contrast accessibility configurations built with absolute transparency.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ==============================================
+       DISCREET FLOATING CAMERA PREVIEW & FEEDBACK
+       ============================================== -->
+  <div class="fixed bottom-6 right-6 z-50 w-72 border border-zinc-800 bg-[#0e0e11] shadow-2xl transition-all duration-300" id="camera-dock">
+    
+    <!-- Top header strip -->
+    <div class="flex items-center justify-between px-3 py-2 border-b border-zinc-800 bg-black/60">
+      <div class="flex items-center gap-2">
+        <span class="w-1.5 h-1.5 rounded-full bg-[#FF3B30] animate-ping" id="sec-indicator"></span>
+        <span class="font-mono-custom text-[10px] uppercase text-zinc-400 font-bold" id="panel-title">LENS FEED // CALIBRATED</span>
+      </div>
+      <button id="minimize-btn" class="font-mono-custom text-[9px] text-zinc-500 hover:text-white uppercase tracking-wider px-1">
+        MINIMIZE [-]
+      </button>
+    </div>
+
+    <!-- Active dynamic preview panel container -->
+    <div class="p-2 relative aspect-video" id="dock-content">
+      <!-- MediaPipe Webcam and Canvas Overlay combo stack -->
+      <div class="w-full h-full bg-zinc-950 relative overflow-hidden border border-zinc-950 rounded-sm">
+        
+        <video 
+          id="webcam-view" 
+          class="w-full h-full object-cover scale-x-[-1]" 
+          autoplay 
+          playsinline 
+          muted
+        ></video>
+        
+        <canvas 
+          id="overlay-canvas" 
+          class="absolute top-0 left-0 w-full h-full scale-x-[-1] pointer-events-none"
+        ></canvas>
+        
+        <!-- Loading overlay with retro grid spinner -->
+        <div id="loader-shroud" class="absolute inset-0 bg-black flex flex-col items-center justify-center space-y-3 p-4 text-center">
+          <div class="w-6 h-6 border-2 border-t-[#FF3B30] border-zinc-800 rounded-full animate-spin"></div>
+          <span class="font-mono-custom text-[9px] uppercase tracking-widest text-[#FF3B30]" id="loader-text">Wasm Loading...</span>
+        </div>
+
+        <!-- Notification banner for direction state detection -->
+        <div id="gesture-banner" class="absolute bottom-2 left-2 right-2 bg-[#FF3B30] p-1 text-center font-mono-custom text-[9px] uppercase font-bold text-white tracking-widest transform translate-y-12 transition-transform duration-250 pointer-events-none">
+          SCROLLING DOWN
+        </div>
+
+        <!-- Camera Off screen shroud state representation -->
+        <div id="disabled-shroud" class="absolute inset-0 bg-black/95 flex flex-col items-center justify-center p-4 text-center hidden">
+          <span class="font-mono-custom text-[11px] text-zinc-500 uppercase tracking-wider">NAV DETECTOR DISABLED</span>
+          <button id="btn-activate-shroud" class="mt-2 text-[9px] font-mono-custom border border-zinc-805 hover:border-zinc-200 px-3 py-1.5 bg-[#0e0e11] hover:text-white text-zinc-400 transition-colors cursor-pointer select-none">
+            START CAMERA
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Footer Telemetry Quick Overview -->
+    <div class="px-3 py-2 border-t border-zinc-900 bg-black/40 text-[9px] font-mono-custom flex justify-between text-zinc-500">
+      <span>REF_MODE: TRACKING_Y</span>
+      <span id="fps-preview">0 FPS</span>
+    </div>
+  </div>
+
+
+  <!-- ==============================================
+       JAVASCRIPT LOGIC & MEDIAPIPE WEB INTEGRATION
+       ============================================== -->
+  <script type="module">
+    // 1. Dynamic CDN Loading from JsDelivr representing modern ES Modules
+    import { HandLandmarker, FilesetResolver } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.8/vision_bundle.js";
+
+    // Navigation and state variables
+    let handLandmarker;
+    let isNavEnabled = true;
+    let isMinimized = false;
+    let lastFrameTime = -1;
+    let webcamStream = null;
+    let animationFrameId = null;
+
+    // Scroll metrics configurations (Tweaks easily available dynamically via slider inputs)
+    let SCROLL_DISTANCE = 450;          // Fixed scroll distance applied smoothly on swipe (px)
+    let SWIPE_THRESHOLD_Y = 0.15;       // Delta Y vertical scale threshold required (0.15)
+    let GESTURE_COOLDOWN_MS = 750;      // Delay before next gesture is permitted in milliseconds
+    const SWIPE_WINDOW_MS = 150;        // Time window to evaluate rapid changes (150ms)
+
+    // Hand movement tracking buffers with timestamp packets
+    let touchHistory = [];
+    let cooldownUntil = 0;
+    
+    // FPS counter calculation variables
+    let fpsFrames = 0;
+    let fpsTime = performance.now();
+
+    // DOM selectors
+    const video = document.getElementById("webcam-view");
+    const canvasElement = document.getElementById("overlay-canvas");
+    const canvasCtx = canvasElement.getContext("2d");
+    const loaderShroud = document.getElementById("loader-shroud");
+    const loaderText = document.getElementById("loader-text");
+    const disabledShroud = document.getElementById("disabled-shroud");
+    const gestureBanner = document.getElementById("gesture-banner");
+    
+    const toggleNavBtn = document.getElementById("toggle-nav-btn");
+    const minimizeBtn = document.getElementById("minimize-btn");
+    const btnActivateShroud = document.getElementById("btn-activate-shroud");
+    
+    // Config slider UI selectors
+    const inputSpeed = document.getElementById("input-speed");
+    const inputThreshold = document.getElementById("input-threshold");
+    const inputAlpha = document.getElementById("input-alpha");
+    const lblSpeed = document.getElementById("lbl-speed");
+    const lblThreshold = document.getElementById("lbl-threshold");
+    const lblAlpha = document.getElementById("lbl-alpha");
+
+    // Telemetry display panels
+    const telY = document.getElementById("tel-y");
+    const telVelocity = document.getElementById("tel-velocity");
+    const telDirection = document.getElementById("tel-direction");
+    const telStatus = document.getElementById("tel-status");
+    const telFps = document.getElementById("tel-fps");
+    const fpsPreview = document.getElementById("fps-preview");
+    const vectorBar = document.getElementById("vector-bar");
+
+    // Track state change
+    function setSystemStatus(text, colorClass) {
+      telStatus.innerText = text;
+      telStatus.className = `font-mono-custom ${colorClass}`;
+      document.getElementById("panel-title").innerText = `LENS FEED // ${text.toUpperCase()}`;
+    }
+
+    // Connect slider inputs to config metrics securely with human labels
+    inputSpeed.addEventListener("input", (e) => {
+      SCROLL_DISTANCE = parseFloat(e.target.value);
+      lblSpeed.innerText = SCROLL_DISTANCE;
+    });
+    inputThreshold.addEventListener("input", (e) => {
+      SWIPE_THRESHOLD_Y = parseFloat(e.target.value);
+      lblThreshold.innerText = SWIPE_THRESHOLD_Y.toFixed(2);
+    });
+    inputAlpha.addEventListener("input", (e) => {
+      GESTURE_COOLDOWN_MS = parseFloat(e.target.value);
+      lblAlpha.innerText = GESTURE_COOLDOWN_MS;
+    });
+
+    // Handle floating window minimization layout adjustments
+    minimizeBtn.addEventListener("click", () => {
+      isMinimized = !isMinimized;
+      const dockContent = document.getElementById("dock-content");
+      if (isMinimized) {
+        dockContent.style.display = "none";
+        minimizeBtn.innerText = "MAXIMIZE [+]";
+      } else {
+        dockContent.style.display = "block";
+        minimizeBtn.innerText = "MINIMIZE [-]";
+        resizeCanvas();
+      }
+    });
+
+    // Initialize MediaPipe HandLandmarker client
+    async function initializeHandTracking() {
+      try {
+        loaderShroud.style.display = "flex";
+        loaderText.innerText = "Loading WASM module...";
+        setSystemStatus("initializing", "text-amber-500");
+
+        // Load WASM filesets from JSDelivr CDN
+        const vision = await FilesetResolver.forVisionTasks(
+          "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.8/wasm"
+        );
+        
+        loaderText.innerText = "Creating Landmarker...";
+        
+        handLandmarker = await HandLandmarker.createFromOptions(vision, {
+          baseOptions: {
+            modelAssetPath: "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task",
+            delegate: "GPU"
+          },
+          runningMode: "VIDEO",
+          numHands: 1
+        });
+
+        loaderShroud.style.display = "none";
+        setSystemStatus("wasm ready", "text-emerald-500");
+        
+        // Auto boot camera setup once initialization resolves successfully
+        await startCamera();
+      } catch (err) {
+        console.error("Initialization Failed: ", err);
+        loaderText.innerHTML = `<span class="text-[#FF3B30]">Initialization Error!</span><br><span class="text-zinc-500 text-[8px] block mt-1">${err.message}</span>`;
+        setSystemStatus("error", "text-red-500");
+        
+        // Show user-friendly offline instructions on failure
+        const errMessage = document.createElement("div");
+        errMessage.className = "text-[9px] text-[#FF3B30] mt-1 font-mono-custom text-center";
+        errMessage.innerText = "Check camera configuration & ensure localhost SSL limits allow permission.";
+        loaderShroud.appendChild(errMessage);
+      }
+    }
+
+    // Toggle entire gesture loop activation state
+    function toggleGestureNavigation() {
+      if (isNavEnabled) {
+        // Turning OFF
+        isNavEnabled = false;
+        toggleNavBtn.innerText = "START HAND NAVIGATION";
+        toggleNavBtn.className = "font-mono-custom text-[11px] tracking-wider bg-emerald-650 hover:bg-emerald-500 text-white transition-colors px-4 py-1.5 font-medium select-none cursor-pointer";
+        disabledShroud.style.display = "flex";
+        setSystemStatus("disabled", "text-zinc-500");
+        
+        // Tear down streams to release camera light resource for privacy bounds
+        stopCamera();
+      } else {
+        // Turning ON
+        isNavEnabled = true;
+        toggleNavBtn.innerText = "STOP HAND NAVIGATION";
+        toggleNavBtn.className = "font-mono-custom text-[11px] tracking-wider bg-[#FF3B30] text-white hover:bg-white hover:text-black transition-colors px-4 py-1.5 font-medium select-none cursor-pointer";
+        disabledShroud.style.display = "none";
+        
+        startCamera();
+      }
+    }
+
+    toggleNavBtn.addEventListener("click", toggleGestureNavigation);
+    btnActivateShroud.addEventListener("click", toggleGestureNavigation);
+
+    // Stop streams
+    function stopCamera() {
+      if (webcamStream) {
+        webcamStream.getTracks().forEach(track => track.stop());
+        webcamStream = null;
+      }
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+        animationFrameId = null;
+      }
+      video.srcObject = null;
+    }
+
+    // Launch secure user webcam stream
+    async function startCamera() {
+      if (!isNavEnabled) return;
+      
+      try {
+        setSystemStatus("camera pending", "text-amber-500");
+        const constraints = {
+          video: {
+            width: 320,
+            height: 240,
+            facingMode: "user"
+          },
+          audio: false
+        };
+
+        webcamStream = await navigator.mediaDevices.getUserMedia(constraints);
+        video.srcObject = webcamStream;
+        
+        video.addEventListener("loadedmetadata", () => {
+          resizeCanvas();
+          setSystemStatus("tracking active", "text-[#FF3B30]");
+          
+          // Launch main prediction drawing rendering frame tick
+          animationFrameId = requestAnimationFrame(predictWebcamFrame);
+        });
+      } catch (err) {
+        console.error("Camera prompt denied or port limits blocked: ", err);
+        setSystemStatus("cam blocked", "text-red-500");
+        alert("Camera error: Please ensure webcam permissions are enabled under your site options list.");
+      }
+    }
+
+    // Set canvas viewport size to perfectly overlay video limits
+    function resizeCanvas() {
+      canvasElement.width = video.videoWidth || 320;
+      canvasElement.height = video.videoHeight || 240;
+    }
+
+    window.addEventListener("resize", resizeCanvas);
+
+    // Main real-time estimation thread loop
+    async function predictWebcamFrame() {
+      if (!handLandmarker || !isNavEnabled || !webcamStream) return;
+
+      const now = performance.now();
+      
+      if (video.currentTime !== lastFrameTime) {
+        lastFrameTime = video.currentTime;
+        
+        // Step 1: Query landmarker results synchronously against current frame
+        const results = handLandmarker.detectForVideo(video, now);
+        
+        // Step 2: Clear overlay canvas
+        canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+
+        // Compute frames per second metrics
+        fpsFrames++;
+        if (now >= fpsTime + 1000) {
+          const calculatedFps = Math.round((fpsFrames * 1000) / (now - fpsTime));
+          telFps.innerText = calculatedFps;
+          fpsPreview.innerText = `${calculatedFps} FPS`;
+          fpsFrames = 0;
+          fpsTime = now;
+        }
+
+        // Process hand landmarks if visible inside field of view
+        if (results.landmarks && results.landmarks.length > 0) {
+          const landmarks = results.landmarks[0]; // Track the main principal hand
+          
+          // Draw dots on hand joints visually
+          drawSkeleton(landmarks);
+
+          // Track only the TIP of the index finger (Landmark 8) for high-precision focus tracking
+          const fingerTip = landmarks[8];
+          const currentY = fingerTip.y;
+          
+          telY.innerText = currentY.toFixed(3);
+
+          if (now < cooldownUntil) {
+            // Cool down period active
+            telVelocity.innerText = "COOLDOWN";
+            telVelocity.className = "font-mono-custom text-amber-500 font-bold";
+            telDirection.innerText = "COOLING DOWN...";
+            telDirection.className = "font-mono-custom text-amber-500 font-bold";
+            vectorBar.style.height = "0%";
+            touchHistory = [];
+            
+            showGestureBanner("COOLING DOWN...", "bg-amber-600");
+          } else {
+            // Add point to history
+            touchHistory.push({ y: currentY, t: now });
+
+            // Clear coordinate packets older than visual window
+            const cutoffTime = now - SWIPE_WINDOW_MS;
+            touchHistory = touchHistory.filter(p => p.t >= cutoffTime);
+
+            if (touchHistory.length > 1) {
+              const oldestPoint = touchHistory[0];
+              const deltaY = currentY - oldestPoint.y;
+              
+              telVelocity.innerText = deltaY.toFixed(4);
+              telVelocity.className = "font-mono-custom text-zinc-350";
+
+              // Update vector visual bar level limits live based on SWIPE_THRESHOLD_Y
+              const visualHeight = Math.min((Math.abs(deltaY) / SWIPE_THRESHOLD_Y) * 100, 100);
+              vectorBar.style.height = `${visualHeight}%`;
+
+              if (deltaY < -SWIPE_THRESHOLD_Y) {
+                // Hand moved UP sharply -> Swipe UP detected -> Scroll PAGE DOWN
+                window.scrollBy({ top: SCROLL_DISTANCE, behavior: "smooth" });
+                telDirection.innerText = "SWIPE UP DETECTED";
+                telDirection.className = "font-mono-custom text-[#FF3B30] font-bold";
+                cooldownUntil = now + GESTURE_COOLDOWN_MS;
+                touchHistory = []; // Reset tracking
+                
+                showGestureBanner("SWIPE DETECTED // DOWN", "bg-[#FF3B30]");
+              } else if (deltaY > SWIPE_THRESHOLD_Y) {
+                // Hand moved DOWN sharply -> Swipe DOWN detected -> Scroll PAGE UP
+                window.scrollBy({ top: -SCROLL_DISTANCE, behavior: "smooth" });
+                telDirection.innerText = "SWIPE DOWN DETECTED";
+                telDirection.className = "font-mono-custom text-emerald-500 font-bold";
+                cooldownUntil = now + GESTURE_COOLDOWN_MS;
+                touchHistory = []; // Reset tracking
+                
+                showGestureBanner("SWIPE DETECTED // UP", "bg-emerald-650");
+              } else {
+                telDirection.innerText = "STATIONARY";
+                telDirection.className = "font-mono-custom text-zinc-500";
+              }
+            } else {
+              telVelocity.innerText = "STABILIZING";
+              telDirection.innerText = "STATIONARY";
+              telDirection.className = "font-mono-custom text-zinc-500";
+              vectorBar.style.height = "0%";
+            }
+          }
+        } else {
+          // Hand lost or out of bounds
+          telY.innerText = "N/A";
+          
+          if (now < cooldownUntil) {
+            telVelocity.innerText = "COOLDOWN";
+            telVelocity.className = "font-mono-custom text-amber-500 font-bold";
+            telDirection.innerText = "COOLING DOWN...";
+            telDirection.className = "font-mono-custom text-amber-500 font-bold";
+            showGestureBanner("COOLING DOWN...", "bg-amber-600");
+          } else {
+            telVelocity.innerText = "0.0000";
+            telVelocity.className = "font-mono-custom text-zinc-500";
+            telDirection.innerText = "NO HAND DETECTED";
+            telDirection.className = "font-mono-custom text-zinc-650";
+            hideGestureBanner();
+          }
+          
+          touchHistory = [];
+          vectorBar.style.height = "0%";
+        }
+      }
+
+      // Loop execution tick
+      animationFrameId = requestAnimationFrame(predictWebcamFrame);
+    }
+
+    // Floating notification UI pop banner
+    let bannerTimer = null;
+    function showGestureBanner(text, bgColorClasses) {
+      gestureBanner.innerText = text;
+      gestureBanner.className = `absolute bottom-2 left-2 right-2 p-1 text-center font-mono-custom text-[9px] uppercase font-bold text-white tracking-widest transform translate-y-0 transition-transform duration-150 pointer-events-none ${bgColorClasses}`;
+      
+      clearTimeout(bannerTimer);
+      bannerTimer = setTimeout(hideGestureBanner, 800);
+    }
+
+    function hideGestureBanner() {
+      gestureBanner.style.transform = "translateY(50px)";
+    }
+
+    // Helper method to draw retro brutalist layout overlay points mapping
+    function drawSkeleton(landmarks) {
+      // Clear past traces
+      canvasCtx.fillStyle = "#FF3B30";
+      canvasCtx.strokeStyle = "rgba(255, 255, 255, 0.45)";
+      canvasCtx.lineWidth = 2;
+
+      // Draw standard connector segments
+      const connections = [
+        [0, 1], [1, 2], [2, 3], [3, 4],       // Thumb
+        [0, 5], [5, 6], [6, 7], [7, 8],       // Index
+        [5, 9], [9, 10], [10, 11], [11, 12],  // Middle
+        [9, 13], [13, 14], [14, 15], [15, 16],// Ring
+        [13, 17], [17, 18], [18, 19], [19, 20],// Pinky
+        [0, 17]                               // Palm base
+      ];
+
+      connections.forEach(([p1, p2]) => {
+        const pt1 = landmarks[p1];
+        const pt2 = landmarks[p2];
+        
+        canvasCtx.beginPath();
+        canvasCtx.moveTo(pt1.x * canvasElement.width, pt1.y * canvasElement.height);
+        canvasCtx.lineTo(pt2.x * canvasElement.width, pt2.y * canvasElement.height);
+        canvasCtx.stroke();
+      });
+
+      // Draw glowing node circles on each joint coordinate
+      for (const pt of landmarks) {
+        canvasCtx.beginPath();
+        canvasCtx.arc(pt.x * canvasElement.width, pt.y * canvasElement.height, 4, 0, 2 * Math.PI);
+        canvasCtx.fillStyle = "#FF3B30";
+        canvasCtx.fill();
+        canvasCtx.lineWidth = 1;
+        canvasCtx.strokeStyle = "#FFFFFF";
+        canvasCtx.stroke();
+      }
+    }
+
+    // Fire off initialization immediately on page mount load
+    window.addEventListener("DOMContentLoaded", initializeHandTracking);
+  </script>
+</body>
+</html>

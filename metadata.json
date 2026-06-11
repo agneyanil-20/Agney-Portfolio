@@ -1,6 +1,6 @@
 {
   "name": "Agney Anil Portfolio",
   "description": "A fullscreen typography-first editorial portfolio homepage inspired by Aino Agency.",
-  "requestFramePermissions": [],
+  "requestFramePermissions": ["camera"],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
