@@ -107,7 +107,7 @@ export default function HeroSection({ onNavigate }: HeroSectionProps) {
         </div>
         <div className="hidden md:flex flex-col text-right text-[10px] text-zinc-600">
           <span>© 2026 AGNEY. ALL RIGHTS RESERVED.</span>
-          <span>EST. SWEDEN — GLOBAL ARCHIVE</span>
+          <span>EST. INDIA — GLOBAL ARCHIVE</span>
         </div>
       </div>
     </section>

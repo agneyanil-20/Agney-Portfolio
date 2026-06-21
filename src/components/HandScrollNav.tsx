@@ -55,6 +55,7 @@ export default function HandScrollNav() {
   const SWIPE_WINDOW_MS = 150;         // Time window to evaluate the rapid change (150ms)
   const SCROLL_DISTANCE = 450;         // Fixed scroll distance applied smoothly on swipe (px)
   const CURSOR_SMOOTHING_EASE = 0.15;  // Linear Interpolation (Lerp) speed weighting
+  const MAGNETIC_PULL_STRENGTH = 0.35; // Strength of the magnetic snap towards element center
   const PINCH_THRESHOLD = 0.04;        // 3D Distance coefficient below which a pinch is registered (< 0.04)
   const CLICK_DEBOUNCE_MS = 500;       // Minimum milliseconds between registered click events
 
@@ -144,9 +145,23 @@ export default function HandScrollNav() {
       // FREEZE PROTOCOL: When a pinch-to-click gesture is actively engaged, freeze updates 
       // to lock the cursor coordinates, neutralizing accidental camera drift/hand jitter.
       if (!isPinchingRef.current) {
+        let lerpTargetX = target.x;
+        let lerpTargetY = target.y;
+
+        // MAGNETIC SNAP: If we are hovering over an interactive element, pull the lerp target
+        // towards the element's center to provide a 'magnetic' sticky feel and combat hand shake.
+        if (prevHoveredElementRef.current) {
+          const rect = prevHoveredElementRef.current.getBoundingClientRect();
+          const centerX = rect.left + rect.width / 2;
+          const centerY = rect.top + rect.height / 2;
+          
+          lerpTargetX = lerpTargetX + (centerX - lerpTargetX) * MAGNETIC_PULL_STRENGTH;
+          lerpTargetY = lerpTargetY + (centerY - lerpTargetY) * MAGNETIC_PULL_STRENGTH;
+        }
+
         // Linear interpolation (Lerp) for silky smooth cursor tracking with custom weighted ease
-        actual.x = actual.x + (target.x - actual.x) * CURSOR_SMOOTHING_EASE;
-        actual.y = actual.y + (target.y - actual.y) * CURSOR_SMOOTHING_EASE;
+        actual.x = actual.x + (lerpTargetX - actual.x) * CURSOR_SMOOTHING_EASE;
+        actual.y = actual.y + (lerpTargetY - actual.y) * CURSOR_SMOOTHING_EASE;
       }
 
       // Update virtual cursor positions directly on DOM element ref
@@ -316,124 +331,155 @@ export default function HandScrollNav() {
             // Draw skeleton landmarks in red
             drawHandSkeleton(ctx, landmarks, canvas.width, canvas.height);
 
-            // Track only the TIP of the index finger (Landmark 8) or middle finger (Landmark 12)
-            // Landmark 12 is the middle finger tip, Landmark 8 is the index finger tip. Let's use Landmark 8.
-            const fingerTip = landmarks[8];
-            const currentY = fingerTip.y;
+            // Shared Time & Common Reference Points
             const currentTime = timestamp;
-
-            // Map coordinates dynamically for virtual pointer target x and y (mirror the X axis)
-            const targetX = (1 - fingerTip.x) * window.innerWidth;
-            const targetY = fingerTip.y * window.innerHeight;
-
-            // Pinch-to-Click Detection (Calculate 3D Euclidean distance between thumb tip Landmark 4 and index tip Landmark 8)
-            const thumbTip = landmarks[4];
             const indexTip = landmarks[8];
-            let isPinchingNow = false;
+            const thumbTip = landmarks[4];
+            const wrist = landmarks[0];
 
-            if (thumbTip && indexTip) {
-              const dx = thumbTip.x - indexTip.x;
-              const dy = thumbTip.y - indexTip.y;
-              const dz = thumbTip.z - indexTip.z;
-              const pinchDistance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+            // Helper to calculate 3D Euclidean distance between two landmarks
+            const d3D = (p1: any, p2: any) => Math.sqrt((p1.x - p2.x)**2 + (p1.y - p2.y)**2 + (p1.z - p2.z)**2);
 
-              if (pinchDistance < PINCH_THRESHOLD) {
-                isPinchingNow = true;
-              }
-            }
+            // Check if fingers are folded (comparing tip distance to wrist vs MCP distance to wrist)
+            const middleFolded = d3D(landmarks[12], wrist) < d3D(landmarks[9], wrist);
+            const ringFolded = d3D(landmarks[16], wrist) < d3D(landmarks[13], wrist);
+            const pinkyFolded = d3D(landmarks[20], wrist) < d3D(landmarks[17], wrist);
 
-            // Sync sync state protocol ref
-            isPinchingRef.current = isPinchingNow;
+            // Unified Gesture State Protocol Definitions
+            const isPointingMode = middleFolded && ringFolded && pinkyFolded;
+            const isOpenHandMode = !middleFolded && !ringFolded && !pinkyFolded;
 
-            // Freeze mapping when actively pinching (locks target position in place)
-            if (!isPinchingNow) {
-              targetPosRef.current = { x: targetX, y: targetY };
-            }
+            if (isOpenHandMode) {
+              // ========================================================
+              // STATE A: TRADITIONAL SCROLL MODE (Open Hand)
+              // ========================================================
+              isPinchingRef.current = false; // Ensure cursor isn't frozen
 
-            // Fire precise select click events upon entering primary pinch lock
-            if (isPinchingNow) {
-              if (currentTime - lastClickTimeRef.current > CLICK_DEBOUNCE_MS) {
-                lastClickTimeRef.current = currentTime;
-                setIsClicked(true);
-                setTimeout(() => setIsClicked(false), 200);
+              // Check if we are currently inside a GESTURE_COOLDOWN_MS period
+              if (currentTime < cooldownUntilRef.current) {
+                setScrollDirection("COOLING_DOWN");
+                // Clear tracking history during cooldown to ensure a fresh reference afterwards
+                touchHistoryRef.current = [];
+              } else {
+                // Maintain position history buffer for the Wrist (Landmark 0)
+                touchHistoryRef.current.push({ y: wrist.y, t: currentTime });
 
-                const clickX = actualPosRef.current.x;
-                const clickY = actualPosRef.current.y;
-                const rawElem = document.elementFromPoint(clickX, clickY);
-                const clickable = findClickableElement(rawElem);
+                // Filter out coordinate frames older than the time window
+                const cutoffTime = currentTime - SWIPE_WINDOW_MS;
+                touchHistoryRef.current = touchHistoryRef.current.filter(p => p.t >= cutoffTime);
 
-                const elToClick = clickable || rawElem;
-                if (elToClick) {
-                  (elToClick as HTMLElement).click();
+                if (touchHistoryRef.current.length > 1) {
+                  const oldestPoint = touchHistoryRef.current[0];
+                  const deltaY = wrist.y - oldestPoint.y;
 
-                  // Create high-fashion aesthetic pointer feedback simulation ripple
-                  const rip = document.createElement("div");
-                  rip.style.position = "fixed";
-                  rip.style.pointerEvents = "none";
-                  rip.style.borderRadius = "50%";
-                  rip.style.border = "2px solid #FF3B30";
-                  rip.style.backgroundColor = "rgba(255, 59, 48, 0.2)";
-                  rip.style.width = "40px";
-                  rip.style.height = "40px";
-                  rip.style.left = `${clickX}px`;
-                  rip.style.top = `${clickY}px`;
-                  rip.style.transform = "translate(-50%, -50%) scale(0.1)";
-                  rip.style.opacity = "1";
-                  rip.style.transition = "all 0.4s cubic-bezier(0.16, 1, 0.3, 1)";
-                  rip.style.zIndex = "10000";
-                  document.body.appendChild(rip);
-
-                  // Trigger scale animation
-                  requestAnimationFrame(() => {
-                    rip.style.transform = "translate(-50%, -50%) scale(1.6)";
-                    rip.style.opacity = "0";
-                  });
-
-                  setTimeout(() => {
-                    rip.remove();
-                  }, 400);
-                }
-              }
-            }
-
-            // Check if we are currently inside a GESTURE_COOLDOWN_MS period
-            if (currentTime < cooldownUntilRef.current) {
-              setScrollDirection("COOLING_DOWN");
-              // Clear tracking history during cooldown to ensure a fresh reference afterwards
-              touchHistoryRef.current = [];
-            } else {
-              // Store coordinates with timestamps
-              touchHistoryRef.current.push({ y: currentY, t: currentTime });
-
-              // Filter out coordinate frames older than the time window
-              const cutoffTime = currentTime - SWIPE_WINDOW_MS;
-              touchHistoryRef.current = touchHistoryRef.current.filter(p => p.t >= cutoffTime);
-
-              if (touchHistoryRef.current.length > 1) {
-                const oldestPoint = touchHistoryRef.current[0];
-                const deltaY = currentY - oldestPoint.y;
-
-                // MediaPipe coordinate space: Y increases downwards.
-                // - A rapid decrease in Y (negative deltaY) represents an UPWARD SWIPE.
-                // - A rapid increase in Y (positive deltaY) represents a DOWNWARD SWIPE.
-                if (deltaY < -SWIPE_THRESHOLD_Y) {
-                  // Upward Swipe detected -> scroll DOWN
-                  window.scrollBy({ top: SCROLL_DISTANCE, behavior: "smooth" });
-                  setScrollDirection("SWIPE_DETECTED_DOWN");
-                  cooldownUntilRef.current = currentTime + GESTURE_COOLDOWN_MS;
-                  touchHistoryRef.current = []; // Clear history
-                } else if (deltaY > SWIPE_THRESHOLD_Y) {
-                  // Downward Swipe detected -> scroll UP
-                  window.scrollBy({ top: -SCROLL_DISTANCE, behavior: "smooth" });
-                  setScrollDirection("SWIPE_DETECTED_UP");
-                  cooldownUntilRef.current = currentTime + GESTURE_COOLDOWN_MS;
-                  touchHistoryRef.current = []; // Clear history
+                  // Update Delta Y math for Traditional Scrolling (Delta Y < -0.12 triggers Scroll UP)
+                  if (deltaY < -0.12) {
+                    // Hand moved UP -> trigger scroll UP
+                    window.scrollBy({ top: -window.innerHeight * 0.6, behavior: "smooth" });
+                    setScrollDirection("SWIPE_DETECTED_UP");
+                    cooldownUntilRef.current = currentTime + GESTURE_COOLDOWN_MS;
+                    touchHistoryRef.current = []; // Clear history
+                  } else if (deltaY > 0.12) {
+                    // Hand moved DOWN -> trigger scroll DOWN
+                    window.scrollBy({ top: window.innerHeight * 0.6, behavior: "smooth" });
+                    setScrollDirection("SWIPE_DETECTED_DOWN");
+                    cooldownUntilRef.current = currentTime + GESTURE_COOLDOWN_MS;
+                    touchHistoryRef.current = []; // Clear history
+                  } else {
+                    setScrollDirection("STATIONARY");
+                  }
                 } else {
                   setScrollDirection("STATIONARY");
                 }
-              } else {
-                setScrollDirection("STATIONARY");
               }
+            } else if (isPointingMode) {
+              // ========================================================
+              // STATE B: MOUSE & RIGHT-CLICK MODE (Pointing Hand)
+              // ========================================================
+              setScrollDirection("STATIONARY"); // Clear scroll debugging UI indicator
+              touchHistoryRef.current = []; // Clear scroll buffer so transition back is clean
+
+              // Map coordinates dynamically for virtual pointer target x and y (mirror the X axis)
+              const targetX = (1 - indexTip.x) * window.innerWidth;
+              const targetY = indexTip.y * window.innerHeight;
+
+              let isPinchingNow = false;
+
+              if (thumbTip && indexTip) {
+                // Measure 3D distance between THUMB_TIP (4) and INDEX_FINGER_TIP (8)
+                const pinchDistance = d3D(thumbTip, indexTip);
+                
+                // If distance < 0.035, register a pinch
+                if (pinchDistance < 0.035) {
+                  isPinchingNow = true;
+                }
+              }
+
+              // Update the shared pinch reference for the cursor update loop to freeze Lerp 
+              isPinchingRef.current = isPinchingNow;
+
+              // Freeze mapping when actively pinching (locks target position in place)
+              if (!isPinchingNow) {
+                targetPosRef.current = { x: targetX, y: targetY };
+              }
+
+              // Fire precise Right-Click (contextmenu) events upon entering primary pinch lock
+              if (isPinchingNow) {
+                if (currentTime - lastClickTimeRef.current > CLICK_DEBOUNCE_MS) {
+                  lastClickTimeRef.current = currentTime;
+                  
+                  // Trigger CSS class feedback
+                  setIsClicked(true);
+                  setTimeout(() => setIsClicked(false), 200);
+
+                  const frozenX = actualPosRef.current.x;
+                  const frozenY = actualPosRef.current.y;
+                  const targetElement = document.elementFromPoint(frozenX, frozenY);
+
+                  if (targetElement) {
+                    // Programmatically dispatch a custom 'contextmenu' event
+                    const rightClickEvent = new MouseEvent('contextmenu', {
+                      bubbles: true,
+                      cancelable: true,
+                      clientX: frozenX,
+                      clientY: frozenY
+                    });
+                    targetElement.dispatchEvent(rightClickEvent);
+
+                    // Create high-fashion aesthetic pointer feedback simulation ripple
+                    const rip = document.createElement("div");
+                    rip.style.position = "fixed";
+                    rip.style.pointerEvents = "none";
+                    rip.style.borderRadius = "50%";
+                    rip.style.border = "2px solid #FF3B30";
+                    rip.style.backgroundColor = "rgba(255, 59, 48, 0.2)";
+                    rip.style.width = "40px";
+                    rip.style.height = "40px";
+                    rip.style.left = `${frozenX}px`;
+                    rip.style.top = `${frozenY}px`;
+                    rip.style.transform = "translate(-50%, -50%) scale(0.1)";
+                    rip.style.opacity = "1";
+                    rip.style.transition = "all 0.4s cubic-bezier(0.16, 1, 0.3, 1)";
+                    rip.style.zIndex = "10000";
+                    document.body.appendChild(rip);
+
+                    // Trigger scale animation
+                    requestAnimationFrame(() => {
+                      rip.style.transform = "translate(-50%, -50%) scale(1.6)";
+                      rip.style.opacity = "0";
+                    });
+
+                    setTimeout(() => {
+                      rip.remove();
+                    }, 400);
+                  }
+                }
+              }
+            } else {
+              // Transitionary states: neither full open nor full pointing
+              isPinchingRef.current = false;
+              setScrollDirection("STATIONARY");
+              touchHistoryRef.current = [];
             }
           } else {
             setHandDetected(false);

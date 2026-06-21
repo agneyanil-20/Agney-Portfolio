@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect } from "react";
+import { Instagram, MessageSquare, Globe } from "lucide-react";
 import HeroSection from "./components/HeroSection";
 import AboutSection from "./components/AboutSection";
 import ProjectsSection from "./components/ProjectsSection";
@@ -136,22 +137,38 @@ export default function App() {
 
       {/* Simple, Ultra-Minimalist Baseline Bottom Footer */}
       <footer className="w-full bg-black py-16 px-6 md:px-12 lg:px-24 border-t border-zinc-950 font-mono text-[10px] text-zinc-500 flex flex-col md:flex-row justify-between items-center gap-6">
-        <div className="flex flex-wrap justify-center md:justify-start gap-6">
+        <div className="flex flex-wrap justify-center md:justify-start gap-4">
           <a 
             href="https://www.instagram.com/agney__anil_kallil?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==" 
             target="_blank" 
             rel="noopener noreferrer"
-            className="hover:text-[#FF3B30] transition-colors duration-200 tracking-wider flex items-center gap-1 focus:outline-none"
+            className="group flex items-center gap-3 bg-[#FF3B30] px-6 py-4 hover:bg-white transition-all duration-500 focus:outline-none"
+            data-cursor="interactive"
           >
-            INSTAGRAM //
+            <Instagram className="w-4 h-4 text-black group-hover:scale-110 transition-transform" />
+            <span className="text-black tracking-[0.2em] uppercase font-black text-[10px]">Instagram</span>
           </a>
+
+          <a 
+            href="https://www.behance.net/agneyanil" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="group flex items-center gap-3 bg-[#FF3B30] px-6 py-4 hover:bg-white transition-all duration-500 focus:outline-none"
+            data-cursor="interactive"
+          >
+            <Globe className="w-4 h-4 text-black group-hover:scale-110 transition-transform" />
+            <span className="text-black tracking-[0.2em] uppercase font-black text-[10px]">Behance</span>
+          </a>
+
           <a 
             href="https://wa.me/917907939730" 
             target="_blank" 
             rel="noopener noreferrer"
-            className="hover:text-[#FF3B30] transition-colors duration-200 tracking-wider flex items-center gap-1 focus:outline-none"
+            className="group flex items-center gap-3 bg-[#FF3B30] px-6 py-4 hover:bg-white transition-all duration-500 focus:outline-none"
+            data-cursor="interactive"
           >
-            WHATSAPP REDIRECT //
+            <MessageSquare className="w-4 h-4 text-black group-hover:scale-110 transition-transform" />
+            <span className="text-black tracking-[0.2em] uppercase font-black text-[10px]">WhatsApp</span>
           </a>
         </div>
         <div className="flex flex-col md:items-end gap-1 text-center md:text-right">

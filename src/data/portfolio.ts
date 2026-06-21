@@ -8,35 +8,74 @@ import { Project, Photo, Experiment } from "../types";
 export const PORTFOLIO_DATA = {
   about: {
     name: "Agney",
-    role: "Designer & Creative Technologist",
-    location: "Stockholm, SE",
-    coordinates: "59.3293° N, 18.0686° E",
+    role: "Creative Lead & Product Designer",
+    subRole: "Building AI-powered digital experiences",
+    location: "Kerala, India",
+    coordinates: "Based in Kerala, India",
+    socials: {
+      instagram: "https://www.instagram.com/agney__anil_kallil?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==",
+      whatsapp: "https://wa.me/917907939730",
+      behance: "https://www.behance.net/agneyanil"
+    },
+    bioShort: "I'm Agney, a Creative Lead and Product Designer from Kerala. I design digital experiences, build AI-powered products, and help businesses turn ideas into scalable solutions.",
     bioLong: [
       "Hi, I'm Agney.",
-      "I'm a designer driven by curiosity, experimentation, and a desire to create meaningful experiences. My work often sits between design, technology, and storytelling, where ideas evolve through exploration rather than routine.",
-      "I enjoy building digital products, testing new concepts, and turning abstract thoughts into tangible experiences. Most of my projects begin with a simple question and grow through research, iteration, and a willingness to try something different.",
-      "This website is a collection of those explorations projects, ideas, and experiments that reflect how I think, create, and learn."
+      "I'm a Creative Lead, UI/UX Designer, and AI Builder from Kerala, India.",
+      "I specialize in creating digital products, websites, and brand experiences that combine design thinking with modern AI-powered workflows.",
+      "Over the past few years, I've evolved from a graphic designer into a product-focused designer, leading creative teams, building web applications, and launching AI-assisted digital experiences.",
+      "I enjoy experimenting with new technologies, designing intuitive interfaces, and turning ideas into products people actually use."
     ],
     philosophy: [
       {
-        title: "Rigid Grids, Organic Content",
-        description: "Standardize the canvas using structural systems, then break them with responsive, dynamic layers of organic movement."
+        title: "Design with Purpose",
+        description: "Every interface should solve a problem, guide a decision, or create a memorable experience."
       },
       {
-        title: "Substraction over Ornamentation",
-        description: "Good design is a result of progressive reduction. If an element can be removed without losing clarity, delete it immediately."
+        title: "AI as a Creative Partner",
+        description: "I use AI to accelerate ideation, prototyping, and execution while keeping human creativity at the center."
       },
       {
-        title: "Code is a Design Medium",
-        description: "Translating static Figma blueprints into code often loses the tactile soul of interactions. We explore design directly in the browser."
+        title: "Ship, Learn, Improve",
+        description: "Great products are built through iteration, testing, and continuous refinement."
       }
     ],
-    skills: ["Creative Direction", "Front-end Architecture", "Interactions Design", "WebGL / Shaders", "Editorial Brand Systems", "Visual Research"],
+    skills: {
+      design: ["UI Design", "UX Design", "Product Design", "Design Systems", "Prototyping", "Branding"],
+      development: ["Google AI Studio", "Claude / Antigravity", "Lovable", "Supabase", "Vercel", "Cloudinary"],
+      leadership: ["Creative Direction", "Team Leadership", "Client Communication", "Project Planning"]
+    },
     timeline: [
-      { year: "2024 — Present", role: "Principal Creative Director", company: "Independent practice, Stockholm" },
-      { year: "2021 — 2024", role: "Senior UX Designer / Interaction Dev", company: "Aino Studio, Gothenburg" },
-      { year: "2019 — 2021", role: "Digital Brand Architect", company: "Snøhetta Lab, Oslo" },
-      { year: "2017 — 2019", role: "Interactive Developer", company: "North Kingdom, Stockholm" }
+      { 
+        year: "2025 — Present", 
+        role: "Creative Lead & UI/UX Designer", 
+        company: "Cntrl M",
+        details: [
+          "Leading a multidisciplinary creative team of designers and content creators.",
+          "Managing design systems, website projects, client branding, and product experiences.",
+          "Designing websites, dashboards, AI tools, and internal systems.",
+          "Introducing AI-assisted workflows using Google AI Studio, Claude, and other modern tools.",
+          "Collaborating directly with clients to transform business requirements into digital experiences.",
+          "Ensuring quality, consistency, and timely delivery across multiple client accounts."
+        ]
+      },
+      { 
+        year: "2024 — 2025", 
+        role: "Graphic Designer", 
+        company: "NBT",
+        details: [
+          "Created digital campaigns, branding assets, and social media content for multiple brands.",
+          "Worked closely with marketing teams to develop performance-driven creative solutions.",
+          "Developed visual identities, promotional materials, and campaign concepts.",
+          "Built strong foundations in branding, typography, layout design, and creative problem-solving."
+        ]
+      }
+    ],
+    highlights: [
+      "Leading creative direction and UI/UX design for multiple brands across education, SaaS, retail, and service industries.",
+      "Designed and launched production-ready websites, dashboards, and digital experiences.",
+      "Built AI-assisted products and internal tools using Google AI Studio, Claude, and Lovable.",
+      "Established scalable design workflows that improved team collaboration and consistency.",
+      "Bridging design and development to rapidly prototype and ship digital products."
     ]
   },
   projects: [
