@@ -3,15 +3,19 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useRef, RefObject } from "react";
-import { motion } from "motion/react";
+import { useRef, RefObject, useState } from "react";
+import { motion, AnimatePresence } from "motion/react";
 import { PORTFOLIO_DATA } from "../data/portfolio";
-import { MapPin, Instagram, MessageSquare, BookOpen, ExternalLink, Globe, ArrowLeft, ArrowRight } from "lucide-react";
+import { MapPin, Instagram, MessageSquare, BookOpen, ExternalLink, Globe, ArrowLeft, ArrowRight, Plus, Minus } from "lucide-react";
 
 export default function AboutSection() {
   const { name, role, subRole, location, coordinates, bioShort, bioLong, philosophy, skills, timeline, socials } = PORTFOLIO_DATA.about;
   const philosophyRef = useRef<HTMLDivElement>(null);
   const competenciesRef = useRef<HTMLDivElement>(null);
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  // Show only 2 items initially
+  const visibleTimeline = isExpanded ? timeline : timeline.slice(0, 2);
 
   const scroll = (ref: RefObject<HTMLDivElement>, direction: "left" | "right") => {
     if (ref.current) {
@@ -37,13 +41,13 @@ export default function AboutSection() {
   return (
     <motion.section 
       id="about" 
-      className="min-h-screen w-full bg-black text-white px-6 md:px-12 lg:px-24 py-16 md:py-24 border-t border-zinc-900 overflow-hidden relative"
+      className="w-full bg-black text-white px-6 md:px-12 lg:px-24 py-8 md:py-12 border-t border-zinc-900 overflow-hidden relative"
       initial={{ opacity: 0, y: 40 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-100px" }}
       transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
     >
-      <div className="max-w-7xl mx-auto flex flex-col gap-20">
+      <div className="max-w-7xl mx-auto flex flex-col gap-12">
         
         {/* Section Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between border-b border-zinc-800 pb-8 gap-4">
@@ -175,7 +179,7 @@ export default function AboutSection() {
           <div className="lg:col-span-7 flex flex-col gap-12">
             
             {/* Biography Paragraphs */}
-            <div className="flex flex-col gap-6 text-zinc-300 text-md md:text-lg lg:text-xl font-light leading-relaxed tracking-wide">
+            <div className="flex flex-col gap-6 text-zinc-300 text-md md:text-lg lg:text-xl font-light leading-relaxed tracking-wide pb-8 border-b border-zinc-900">
               {bioLong.map((para, i) => (
                 <motion.p 
                   key={i} 
@@ -189,153 +193,73 @@ export default function AboutSection() {
               ))}
             </div>
 
-            {/* Philosophy Slider */}
-            <div className="flex flex-col gap-6 pt-6 border-t border-zinc-900">
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="font-mono text-zinc-500 text-xs tracking-widest uppercase">
-                  // GUIDING DESIGN PRINCIPLES
-                </h3>
-                <div className="flex items-center gap-2">
-                  <button 
-                    onClick={() => scroll(philosophyRef, "left")}
-                    className="p-2 border border-zinc-900 hover:border-[#FF3B30] transition-colors text-zinc-500 hover:text-white cursor-pointer group"
-                  >
-                    <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
-                  </button>
-                  <button 
-                    onClick={() => scroll(philosophyRef, "right")}
-                    className="p-2 border border-zinc-900 hover:border-[#FF3B30] transition-colors text-zinc-500 hover:text-white cursor-pointer group"
-                  >
-                    <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-                  </button>
-                </div>
-              </div>
-
-              <div 
-                ref={philosophyRef}
-                className="flex overflow-x-auto gap-6 pb-4 scrollbar-none snap-x snap-mandatory scroll-smooth"
-                style={{ scrollbarWidth: "none" }}
-              >
-                {philosophy.map((item, idx) => (
-                  <motion.div 
-                    key={idx}
-                    className="flex-shrink-0 w-[85vw] md:w-[280px] snap-start p-5 bg-[#080808] border border-zinc-900 rounded-sm hover:border-zinc-800 transition-colors group flex flex-col h-full"
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.5, delay: idx * 0.1 }}
-                  >
-                    <span className="text-[#FF3B30] font-mono text-xs block mb-3">0{idx + 1}.</span>
-                    <h4 className="font-display font-semibold text-white text-base mb-2 group-hover:text-[#FF3B30] transition-colors">
-                      {item.title}
-                    </h4>
-                    <p className="text-zinc-400 text-xs leading-relaxed font-light">
-                      {item.description}
-                    </p>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
-
-            {/* Competency Skills Slider */}
-            <div className="flex flex-col gap-8 pt-6 border-t border-zinc-900">
-              <div className="flex items-center justify-between">
-                <h3 className="font-mono text-zinc-500 text-xs tracking-widest uppercase">
-                  // CORE COMPETENCIES
-                </h3>
-                <div className="flex items-center gap-2">
-                  <button 
-                    onClick={() => scroll(competenciesRef, "left")}
-                    className="p-2 border border-zinc-900 hover:border-[#FF3B30] transition-colors text-zinc-500 hover:text-white cursor-pointer group"
-                    title="Scroll Left"
-                  >
-                    <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
-                  </button>
-                  <button 
-                    onClick={() => scroll(competenciesRef, "right")}
-                    className="p-2 border border-zinc-900 hover:border-[#FF3B30] transition-colors text-zinc-500 hover:text-white cursor-pointer group"
-                    title="Scroll Right"
-                  >
-                    <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-                  </button>
-                </div>
-              </div>
-
-              <div 
-                ref={competenciesRef}
-                className="flex overflow-x-auto gap-8 pb-4 scrollbar-none snap-x snap-mandatory scroll-smooth"
-                style={{ scrollbarWidth: "none" }}
-              >
-                {Object.entries(skills).map(([category, items], idx) => (
-                  <motion.div 
-                    key={category} 
-                    className="flex-shrink-0 w-[85vw] md:w-[320px] snap-start flex flex-col gap-6 bg-zinc-950/20 border border-zinc-900 p-6 hover:border-zinc-800 transition-colors"
-                    initial={{ opacity: 0, x: 20 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.5, delay: idx * 0.1 }}
-                  >
-                    <h4 className="font-mono text-[10px] text-[#FF3B30] uppercase tracking-[0.2em] font-bold border-b border-zinc-900 pb-3">
-                      {category}
-                    </h4>
-                    <div className="flex flex-wrap gap-2">
-                      {(items as string[]).map((skill, index) => (
-                        <span 
-                          key={index} 
-                          className="bg-zinc-900/50 hover:bg-[#FF3B30]/10 text-zinc-400 hover:text-white transition-all duration-300 border border-zinc-800 hover:border-zinc-700 rounded-none px-3 py-1 font-mono text-[10px] cursor-default"
-                        >
-                          {skill}
-                        </span>
-                      ))}
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
-
             {/* Professional Timeline */}
-            <div className="flex flex-col gap-6 pt-6 border-t border-zinc-900">
+            <div className="flex flex-col gap-6 pt-6">
               <h3 className="font-mono text-zinc-500 text-xs tracking-widest uppercase">
                 // CAREER PATHWAY
               </h3>
-              <div className="flex flex-col gap-2">
-                {timeline.map((item, index) => (
-                  <motion.div 
-                    key={index}
-                    className="flex flex-col py-6 border-b border-zinc-900 hover:bg-zinc-950/50 px-4 transition-colors duration-300"
-                    initial={{ opacity: 0, y: 15 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.4, delay: index * 0.1 }}
-                  >
-                    <div className="flex flex-col md:flex-row justify-between items-baseline gap-2 mb-4">
-                      <div className="flex flex-col gap-1">
-                        <h4 className="font-display text-base md:text-lg font-bold text-white tracking-tight">
-                          {item.role}
-                        </h4>
-                        <span className="font-mono text-xs text-[#FF3B30] uppercase tracking-widest font-semibold italic">
-                          @ {item.company}
+              <div className="flex flex-col">
+                <AnimatePresence mode="popLayout">
+                  {visibleTimeline.map((item, index) => (
+                    <motion.div 
+                      key={`${item.company}-${item.role}-${index}`}
+                      className="flex flex-col py-6 border-b border-zinc-900 hover:bg-zinc-950/50 px-4 transition-colors duration-300"
+                      initial={{ opacity: 0, y: 15 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -15 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 0.4, delay: isExpanded ? 0 : index * 0.1 }}
+                    >
+                      <div className="flex flex-col md:flex-row justify-between items-baseline gap-2 mb-4">
+                        <div className="flex flex-col gap-1">
+                          <h4 className="font-display text-base md:text-lg font-bold text-white tracking-tight">
+                            {item.role}
+                          </h4>
+                          <span className="font-mono text-xs text-[#FF3B30] uppercase tracking-widest font-semibold italic">
+                            @ {item.company}
+                          </span>
+                        </div>
+                        <span className="font-mono text-[10px] text-zinc-500 bg-zinc-900/50 px-2 py-1 border border-zinc-800">
+                          {item.year}
                         </span>
                       </div>
-                      <span className="font-mono text-[10px] text-zinc-500 bg-zinc-900/50 px-2 py-1 border border-zinc-800">
-                        {item.year}
-                      </span>
-                    </div>
 
-                    {item.details && (
-                      <ul className="flex flex-col gap-2.5 ml-1">
-                        {item.details.map((detail, idx) => (
-                          <li key={idx} className="flex gap-3 items-start group">
-                            <span className="w-1 h-1 rounded-full bg-zinc-700 mt-2 transition-colors group-hover:bg-[#FF3B30] flex-shrink-0" />
-                            <span className="text-zinc-400 text-xs md:text-sm font-light leading-relaxed tracking-wide">
-                              {detail}
-                            </span>
-                          </li>
-                        ))}
-                      </ul>
+                      {item.details && (
+                        <ul className="flex flex-col gap-2.5 ml-1">
+                          {item.details.map((detail, idx) => (
+                            <li key={idx} className="flex gap-3 items-start group">
+                              <span className="w-1 h-1 rounded-full bg-zinc-700 mt-2 transition-colors group-hover:bg-[#FF3B30] flex-shrink-0" />
+                              <span className="text-zinc-400 text-xs md:text-sm font-light leading-relaxed tracking-wide">
+                                {detail}
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+
+                {timeline.length > 2 && (
+                  <motion.button
+                    onClick={() => setIsExpanded(!isExpanded)}
+                    className="mt-8 self-start flex items-center gap-3 px-6 py-4 border border-zinc-800 hover:border-[#FF3B30] transition-all duration-300 group font-mono text-[10px] tracking-[0.2em] uppercase font-bold text-zinc-500 hover:text-white"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    {isExpanded ? (
+                      <>
+                        <Minus className="w-3.5 h-3.5 text-[#FF3B30]" />
+                        <span>Show Less</span>
+                      </>
+                    ) : (
+                      <>
+                        <Plus className="w-3.5 h-3.5 text-[#FF3B30]" />
+                        <span>Read More Experience</span>
+                      </>
                     )}
-                  </motion.div>
-                ))}
+                  </motion.button>
+                )}
               </div>
             </div>
 

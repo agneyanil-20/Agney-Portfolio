@@ -150,7 +150,7 @@ export default function App() {
       </div>
 
       {/* Main Sections Hierarchy */}
-      <main className="relative flex flex-col w-full space-y-16 md:space-y-24 pb-24">
+      <main className="relative flex flex-col w-full pb-16">
         {/* Fullscreen Hero Cover Paragraph */}
         <HeroSection onNavigate={handleNavigate} />
 

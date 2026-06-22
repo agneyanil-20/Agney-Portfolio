@@ -68,6 +68,26 @@ export const PORTFOLIO_DATA = {
           "Developed visual identities, promotional materials, and campaign concepts.",
           "Built strong foundations in branding, typography, layout design, and creative problem-solving."
         ]
+      },
+      {
+        year: "2023 — 2024",
+        role: "Freelance UI Designer & Branding Specialist",
+        company: "Independent",
+        details: [
+          "Delivered bespoke digital solutions for startups and local businesses.",
+          "Specialized in minimalist web design and cohesive visual identity systems.",
+          "Managed end-to-end creative processes from discovery to final delivery."
+        ]
+      },
+      {
+        year: "2022 — 2023",
+        role: "Creative Intern",
+        company: "Pixel Perfect Studio",
+        details: [
+          "Assisted in the creation of visual content for social media and web platforms.",
+          "Gained hands-on experience with industry-standard design tools and workflows.",
+          "Contributed to brainstorming sessions for client branding projects."
+        ]
       }
     ],
     highlights: [

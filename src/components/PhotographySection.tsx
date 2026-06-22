@@ -29,7 +29,7 @@ export default function PhotographySection() {
   return (
     <motion.section 
       id="photography" 
-      className="min-h-screen w-full bg-black text-white px-6 md:px-12 lg:px-24 py-16 md:py-24 border-t border-zinc-900 overflow-hidden relative"
+      className="w-full bg-black text-white px-6 md:px-12 lg:px-24 py-8 md:py-12 border-t border-zinc-900 overflow-hidden relative"
       initial={{ opacity: 0, y: 40 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-100px" }}

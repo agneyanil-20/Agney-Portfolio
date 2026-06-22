@@ -68,23 +68,21 @@ html.light .bg-black:not(.keep-dark):not(.theme-toggle) {
 html.light .bg-zinc-950:not(.keep-dark):not(.theme-toggle),
 html.light .bg-zinc-900:not(.keep-dark):not(.theme-toggle),
 html.light .bg-black:not(.keep-dark):not(.theme-toggle),
-html.light .bg-\[\#020202\]:not(.keep-dark):not(.theme-toggle),
-html.light .bg-\[\#030303\]:not(.keep-dark):not(.theme-toggle),
-html.light .bg-\[\#050505\]:not(.keep-dark):not(.theme-toggle),
-html.light .bg-\[\#080808\]:not(.keep-dark):not(.theme-toggle),
-html.light .bg-\[\#0c0c0c\]:not(.keep-dark):not(.theme-toggle) {
+html.light [class*="bg-[#0"]:not(.keep-dark):not(.theme-toggle) {
   background-color: #ffffff !important; /* Crisp components */
 }
 
 html.light .bg-zinc-950:not(.keep-dark),
-html.light .bg-zinc-900:not(.keep-dark) {
+html.light .bg-zinc-900:not(.keep-dark),
+html.light .bg-zinc-800:not(.keep-dark) {
   background-color: #f4f4f5 !important;
 }
 
 html.light .bg-zinc-950\/50:not(.keep-dark),
 html.light .bg-zinc-950\/40:not(.keep-dark),
-html.light .bg-zinc-950\/20:not(.keep-dark) {
-  background-color: rgba(228, 228, 231, 0.7) !important;
+html.light .bg-zinc-950\/20:not(.keep-dark),
+html.light .bg-zinc-900\/50:not(.keep-dark) {
+  background-color: rgba(228, 228, 231, 0.8) !important;
 }
 
 html.light .text-white:not(.keep-dark):not(.theme-toggle):not(.inline-flex),
