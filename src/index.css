@@ -67,52 +67,61 @@ html.light .bg-black:not(.keep-dark):not(.theme-toggle) {
 
 html.light .bg-zinc-950:not(.keep-dark):not(.theme-toggle),
 html.light .bg-zinc-900:not(.keep-dark):not(.theme-toggle),
-html.light .bg-[#020202]:not(.keep-dark):not(.theme-toggle),
-html.light .bg-[#030303]:not(.keep-dark):not(.theme-toggle),
-html.light .bg-[#050505]:not(.keep-dark):not(.theme-toggle),
-html.light .bg-[#080808]:not(.keep-dark):not(.theme-toggle),
-html.light .bg-[#0c0c0c]:not(.keep-dark):not(.theme-toggle) {
+html.light .bg-black:not(.keep-dark):not(.theme-toggle),
+html.light .bg-\[\#020202\]:not(.keep-dark):not(.theme-toggle),
+html.light .bg-\[\#030303\]:not(.keep-dark):not(.theme-toggle),
+html.light .bg-\[\#050505\]:not(.keep-dark):not(.theme-toggle),
+html.light .bg-\[\#080808\]:not(.keep-dark):not(.theme-toggle),
+html.light .bg-\[\#0c0c0c\]:not(.keep-dark):not(.theme-toggle) {
   background-color: #ffffff !important; /* Crisp components */
 }
 
+html.light .bg-zinc-950:not(.keep-dark),
+html.light .bg-zinc-900:not(.keep-dark) {
+  background-color: #f4f4f5 !important;
+}
+
 html.light .bg-zinc-950\/50:not(.keep-dark),
-html.light .bg-zinc-950\/40:not(.keep-dark) {
-  background-color: rgba(255, 255, 255, 0.8) !important;
+html.light .bg-zinc-950\/40:not(.keep-dark),
+html.light .bg-zinc-950\/20:not(.keep-dark) {
+  background-color: rgba(228, 228, 231, 0.7) !important;
 }
 
-html.light .text-white:not(.keep-dark):not(.theme-toggle):not(.inline-flex) {
-  color: #121212 !important;
+html.light .text-white:not(.keep-dark):not(.theme-toggle):not(.inline-flex),
+html.light .text-white:not(.keep-dark) span {
+  color: #09090b !important;
 }
 
-html.light .text-zinc-300 {
-  color: #27272a !important; /* Deep charcoal slate */
+html.light .text-zinc-300:not(.keep-dark) {
+  color: #121212 !important; /* Deep charcoal slate */
 }
 
-html.light .text-zinc-400 {
+html.light .text-zinc-400:not(.keep-dark) {
+  color: #27272a !important;
+}
+
+html.light .text-zinc-500:not(.keep-dark) {
+  color: #3f3f46 !important;
+}
+
+html.light .text-zinc-600:not(.keep-dark) {
   color: #52525b !important;
 }
 
-html.light .text-zinc-500 {
+html.light .text-zinc-700:not(.keep-dark) {
   color: #71717a !important;
-}
-
-html.light .text-zinc-600 {
-  color: #a1a1aa !important;
-}
-
-html.light .text-zinc-700 {
-  color: #d4d4d8 !important;
 }
 
 /* Borders conversion to elegant light-gray structural wireframes */
 html.light .border-zinc-950,
 html.light .border-zinc-900,
-html.light .border-zinc-900\/60 {
-  border-color: #d4d4d8 !important;
+html.light .border-zinc-900\/60,
+html.light .border-zinc-900\/50 {
+  border-color: #e4e4e7 !important;
 }
 
 html.light .border-zinc-800 {
-  border-color: #a1a1aa !important; /* Visual separation lines */
+  border-color: #d4d4d8 !important; /* Visual separation lines */
 }
 
 html.light .border-white\/40 {
@@ -271,8 +280,7 @@ html.light .hover\:text-white:hover {
 }
 
 /* Lab modules and coordinate spaces double inversion (preserves red colors perfectly) */
-html.light canvas,
-html.light #explorations svg {
+html.light canvas {
   filter: invert(1) hue-rotate(180deg) !important;
 }
 

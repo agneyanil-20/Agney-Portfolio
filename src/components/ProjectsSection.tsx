@@ -14,7 +14,7 @@ export default function ProjectsSection() {
   const scroll = (direction: "left" | "right") => {
     if (scrollContainerRef.current) {
       const { scrollLeft, clientWidth } = scrollContainerRef.current;
-      const scrollAmount = clientWidth * 0.8;
+      const scrollAmount = clientWidth * 0.5;
       const targetScroll = direction === "left" ? scrollLeft - scrollAmount : scrollLeft + scrollAmount;
       scrollContainerRef.current.scrollTo({
         left: targetScroll,
@@ -24,9 +24,13 @@ export default function ProjectsSection() {
   };
 
   return (
-    <section 
+    <motion.section 
       id="projects" 
-      className="w-full bg-black text-white px-6 md:px-12 lg:px-24 py-24 md:py-32 overflow-hidden relative"
+      className="w-full bg-black text-white px-6 md:px-12 lg:px-24 py-16 md:py-24 overflow-hidden relative"
+      initial={{ opacity: 0, y: 40 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-100px" }}
+      transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
     >
       <div className="max-w-7xl mx-auto flex flex-col gap-16 md:gap-24">
         
@@ -182,6 +186,6 @@ export default function ProjectsSection() {
         </div>
 
       </div>
-    </section>
+    </motion.section>
   );
 }

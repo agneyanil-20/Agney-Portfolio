@@ -9,7 +9,6 @@ import HeroSection from "./components/HeroSection";
 import AboutSection from "./components/AboutSection";
 import ProjectsSection from "./components/ProjectsSection";
 import PhotographySection from "./components/PhotographySection";
-import ExperimentsSection from "./components/ExperimentsSection";
 import CustomCursor from "./components/CustomCursor";
 import NoiseBackground from "./components/NoiseBackground";
 import HandScrollNav from "./components/HandScrollNav";
@@ -70,6 +69,39 @@ export default function App() {
     localStorage.setItem("portfolio-theme", theme);
   }, [theme]);
 
+  // Dynamic document title based on section in view
+  useEffect(() => {
+    const sectionTitles: Record<string, string> = {
+      hero: "Home",
+      about: "About",
+      projects: "Work",
+      photography: "Photography"
+    };
+
+    const handleIntersection = (entries: IntersectionObserverEntry[]) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          const title = sectionTitles[entry.target.id];
+          if (title) {
+            document.title = `Agney Anil | ${title}`;
+          }
+        }
+      });
+    };
+
+    const observer = new IntersectionObserver(handleIntersection, {
+      rootMargin: "-45% 0px -45% 0px", 
+      threshold: 0
+    });
+
+    Object.keys(sectionTitles).forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) observer.observe(el);
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <div id="app-canvas" className="relative min-h-screen bg-black text-white selection:bg-[#FF3B30] selection:text-white transition-colors duration-500">
       {/* Subtle Analog Grain Noise Overlay */}
@@ -118,7 +150,7 @@ export default function App() {
       </div>
 
       {/* Main Sections Hierarchy */}
-      <main className="relative flex flex-col w-full">
+      <main className="relative flex flex-col w-full space-y-16 md:space-y-24 pb-24">
         {/* Fullscreen Hero Cover Paragraph */}
         <HeroSection onNavigate={handleNavigate} />
 
@@ -130,9 +162,6 @@ export default function App() {
 
         {/* Section 3: photography -> triggers scrolling from "Photography" */}
         <PhotographySection />
-
-        {/* Section 4: explorations -> triggers scrolling from "explorations" */}
-        <ExperimentsSection />
       </main>
 
       {/* Simple, Ultra-Minimalist Baseline Bottom Footer */}

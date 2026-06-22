@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Project, Photo, Experiment } from "../types";
+import { Project, Photo } from "../types";
 
 export const PORTFOLIO_DATA = {
   about: {
@@ -188,25 +188,5 @@ export const PORTFOLIO_DATA = {
       coordinates: "57.6349° N, 18.2913° E",
       date: "Apr 2026"
     }
-  ] as Photo[],
-  explorations: [
-    {
-      id: "gravity-particles",
-      title: "Coordinate Gravity Canvas",
-      description: "Interactive canvas experiment where particles gravitate towards physical text layout contours and cursor pulls, creating fluid structures.",
-      tech: "HTML5 Canvas, Dynamic Vector Fields"
-    },
-    {
-      id: "kinetic-typography",
-      title: "Liquid Typography Distorter",
-      description: "A generative typographic interface that distorts custom content based on micro-cursor velocity and viewport scroll metrics.",
-      tech: "SVG Filters, React Mouse Motion State"
-    },
-    {
-      id: "diurnal-monolith",
-      title: "Procedural Shadow Play",
-      description: "Interactive brutalist block renderer that projects clean shadow angles matching the local Stockholm real-time solar path.",
-      tech: "D3 Projection Coordinates, SVG Extruder"
-    }
-  ] as Experiment[]
+  ] as Photo[]
 };

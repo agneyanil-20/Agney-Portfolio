@@ -26,7 +26,7 @@ export default function HeroSection({ onNavigate }: HeroSectionProps) {
   };
 
   return (
-    <section className="relative min-h-screen w-full flex flex-col justify-between px-6 md:px-12 lg:px-24 py-12 bg-black overflow-hidden select-none">
+    <section id="hero" className="relative min-h-screen w-full flex flex-col justify-between px-6 md:px-12 lg:px-24 py-12 bg-black overflow-hidden select-none">
       {/* Non-rendering header placeholder for spacing balance */}
       <div className="w-full h-4" />
 
@@ -63,7 +63,7 @@ export default function HeroSection({ onNavigate }: HeroSectionProps) {
               work
               <span className="absolute bottom-[2px] left-1 right-1 h-[2px] md:h-[3px] bg-[#FF3B30] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left" />
             </motion.button>
-            <span className="text-white">, design process, </span>
+            <span className="text-white">, design process, and </span>
             
             {/* "photography" -> Photography section */}
             <motion.button
@@ -77,22 +77,7 @@ export default function HeroSection({ onNavigate }: HeroSectionProps) {
               photography
               <span className="absolute bottom-[2px] left-1 right-1 h-[2px] md:h-[3px] bg-[#FF3B30] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left" />
             </motion.button>
-            <span className="text-white">, and ongoing </span>
-            
-            {/* "experiments" -> Experiments section */}
-            <motion.button
-              whileHover={{ scale: 1.05, y: -2 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={(e) => handleWordClick("explorations", e)}
-              data-cursor="interactive"
-              className="inline-block relative text-[#FF3B30] hover:text-[#ff5c54] transition-all duration-300 font-extrabold focus:outline-none focus:ring-1 focus:ring-[#FF3B30] rounded px-1 cursor-pointer select-none origin-center group"
-              style={{ background: "none", border: "none", padding: 0 }}
-            >
-              experiments
-              <span className="absolute bottom-[2px] left-1 right-1 h-[2px] md:h-[3px] bg-[#FF3B30] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left" />
-            </motion.button>
-            
-            <span className="text-white"> each shaped by curiosity, exploration, and a constant desire to create something unexpected.</span>
+            <span className="text-white"> — each shaped by curiosity, exploration, and a constant desire to create something unexpected.</span>
           </p>
         </motion.div>
       </div>

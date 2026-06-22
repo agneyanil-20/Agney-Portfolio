@@ -3,27 +3,45 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { useRef, RefObject } from "react";
 import { motion } from "motion/react";
 import { PORTFOLIO_DATA } from "../data/portfolio";
-import { MapPin, Instagram, MessageSquare, BookOpen, ExternalLink, Globe } from "lucide-react";
+import { MapPin, Instagram, MessageSquare, BookOpen, ExternalLink, Globe, ArrowLeft, ArrowRight } from "lucide-react";
 
 export default function AboutSection() {
-  const { name, role, subRole, location, coordinates, bioShort, bioLong, philosophy, skills, timeline, highlights, socials } = PORTFOLIO_DATA.about;
+  const { name, role, subRole, location, coordinates, bioShort, bioLong, philosophy, skills, timeline, socials } = PORTFOLIO_DATA.about;
+  const philosophyRef = useRef<HTMLDivElement>(null);
+  const competenciesRef = useRef<HTMLDivElement>(null);
+
+  const scroll = (ref: RefObject<HTMLDivElement>, direction: "left" | "right") => {
+    if (ref.current) {
+      const { scrollLeft, clientWidth } = ref.current;
+      const scrollAmount = clientWidth * 0.5;
+      const targetScroll = direction === "left" ? scrollLeft - scrollAmount : scrollLeft + scrollAmount;
+      ref.current.scrollTo({
+        left: targetScroll,
+        behavior: "smooth",
+      });
+    }
+  };
 
   // Calculate estimated reading time based on 200 WPM
   const editorialText = [
     bioShort,
     ...bioLong,
-    ...philosophy.flatMap(p => [p.title, p.description]),
-    ...(highlights || [])
+    ...philosophy.flatMap(p => [p.title, p.description])
   ].join(" ");
   const wordCount = editorialText.trim().split(/\s+/).filter(Boolean).length;
   const readingTime = Math.ceil(wordCount / 200);
 
   return (
-    <section 
+    <motion.section 
       id="about" 
-      className="min-h-screen w-full bg-black text-white px-6 md:px-12 lg:px-24 py-24 md:py-32 border-t border-zinc-900 overflow-hidden relative"
+      className="min-h-screen w-full bg-black text-white px-6 md:px-12 lg:px-24 py-16 md:py-24 border-t border-zinc-900 overflow-hidden relative"
+      initial={{ opacity: 0, y: 40 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-100px" }}
+      transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
     >
       <div className="max-w-7xl mx-auto flex flex-col gap-20">
         
@@ -75,20 +93,6 @@ export default function AboutSection() {
                   PORTRAIT 01 // Grayscale contrast mapping
                 </div>
               </motion.div>
-
-              {/* Personal Intro under Image */}
-              {bioShort && (
-                <motion.div 
-                  className="p-6 bg-zinc-950/50 border border-zinc-900 border-l-2 border-l-[#FF3B30]"
-                  initial={{ opacity: 0, x: -20 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                >
-                  <p className="text-zinc-400 text-sm md:text-base font-light italic leading-relaxed">
-                    "{bioShort}"
-                  </p>
-                </motion.div>
-              )}
             </div>
 
             {/* Quick Stats Grid */}
@@ -164,31 +168,6 @@ export default function AboutSection() {
                   </a>
                 </div>
               </div>
-
-              {/* Achievements / Highlights Section */}
-              {highlights && (
-                <div className="flex flex-col gap-4 pt-4 border-t border-zinc-900">
-                  <h3 className="font-mono text-zinc-500 text-[10px] tracking-widest uppercase">
-                    // SELECTED HIGHLIGHTS
-                  </h3>
-                  <div className="flex flex-col gap-3">
-                    {highlights.map((item, i) => (
-                      <motion.div 
-                        key={i}
-                        className="flex gap-3 items-start"
-                        initial={{ opacity: 0, x: -10 }}
-                        whileInView={{ opacity: 1, x: 0 }}
-                        transition={{ delay: i * 0.1 }}
-                      >
-                        <div className="w-1.5 h-1.5 bg-[#FF3B30] mt-1.5 flex-shrink-0" />
-                        <span className="text-zinc-400 text-xs font-light leading-snug">
-                          {item}
-                        </span>
-                      </motion.div>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
           </div>
 
@@ -210,16 +189,37 @@ export default function AboutSection() {
               ))}
             </div>
 
-            {/* Philosophy Cards */}
+            {/* Philosophy Slider */}
             <div className="flex flex-col gap-6 pt-6 border-t border-zinc-900">
-              <h3 className="font-mono text-zinc-500 text-xs tracking-widest uppercase mb-4">
-                // GUIDING DESIGN PRINCIPLES
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="font-mono text-zinc-500 text-xs tracking-widest uppercase">
+                  // GUIDING DESIGN PRINCIPLES
+                </h3>
+                <div className="flex items-center gap-2">
+                  <button 
+                    onClick={() => scroll(philosophyRef, "left")}
+                    className="p-2 border border-zinc-900 hover:border-[#FF3B30] transition-colors text-zinc-500 hover:text-white cursor-pointer group"
+                  >
+                    <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
+                  </button>
+                  <button 
+                    onClick={() => scroll(philosophyRef, "right")}
+                    className="p-2 border border-zinc-900 hover:border-[#FF3B30] transition-colors text-zinc-500 hover:text-white cursor-pointer group"
+                  >
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                  </button>
+                </div>
+              </div>
+
+              <div 
+                ref={philosophyRef}
+                className="flex overflow-x-auto gap-6 pb-4 scrollbar-none snap-x snap-mandatory scroll-smooth"
+                style={{ scrollbarWidth: "none" }}
+              >
                 {philosophy.map((item, idx) => (
                   <motion.div 
                     key={idx}
-                    className="p-5 bg-[#080808] border border-zinc-900 rounded-sm hover:border-zinc-800 transition-colors group"
+                    className="flex-shrink-0 w-[85vw] md:w-[280px] snap-start p-5 bg-[#080808] border border-zinc-900 rounded-sm hover:border-zinc-800 transition-colors group flex flex-col h-full"
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
@@ -237,32 +237,58 @@ export default function AboutSection() {
               </div>
             </div>
 
-            {/* Competency Skills Tags */}
+            {/* Competency Skills Slider */}
             <div className="flex flex-col gap-8 pt-6 border-t border-zinc-900">
-              <h3 className="font-mono text-zinc-500 text-xs tracking-widest uppercase">
-                // CORE COMPETENCIES
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                {Object.entries(skills).map(([category, items]) => (
-                  <div key={category} className="flex flex-col gap-4">
-                    <h4 className="font-mono text-[10px] text-[#FF3B30] uppercase tracking-[0.2em] font-bold">
+              <div className="flex items-center justify-between">
+                <h3 className="font-mono text-zinc-500 text-xs tracking-widest uppercase">
+                  // CORE COMPETENCIES
+                </h3>
+                <div className="flex items-center gap-2">
+                  <button 
+                    onClick={() => scroll(competenciesRef, "left")}
+                    className="p-2 border border-zinc-900 hover:border-[#FF3B30] transition-colors text-zinc-500 hover:text-white cursor-pointer group"
+                    title="Scroll Left"
+                  >
+                    <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
+                  </button>
+                  <button 
+                    onClick={() => scroll(competenciesRef, "right")}
+                    className="p-2 border border-zinc-900 hover:border-[#FF3B30] transition-colors text-zinc-500 hover:text-white cursor-pointer group"
+                    title="Scroll Right"
+                  >
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                  </button>
+                </div>
+              </div>
+
+              <div 
+                ref={competenciesRef}
+                className="flex overflow-x-auto gap-8 pb-4 scrollbar-none snap-x snap-mandatory scroll-smooth"
+                style={{ scrollbarWidth: "none" }}
+              >
+                {Object.entries(skills).map(([category, items], idx) => (
+                  <motion.div 
+                    key={category} 
+                    className="flex-shrink-0 w-[85vw] md:w-[320px] snap-start flex flex-col gap-6 bg-zinc-950/20 border border-zinc-900 p-6 hover:border-zinc-800 transition-colors"
+                    initial={{ opacity: 0, x: 20 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.5, delay: idx * 0.1 }}
+                  >
+                    <h4 className="font-mono text-[10px] text-[#FF3B30] uppercase tracking-[0.2em] font-bold border-b border-zinc-900 pb-3">
                       {category}
                     </h4>
                     <div className="flex flex-wrap gap-2">
                       {(items as string[]).map((skill, index) => (
-                        <motion.span 
+                        <span 
                           key={index} 
-                          className="bg-zinc-950 hover:bg-[#FF3B30]/10 text-zinc-400 hover:text-white transition-all duration-300 border border-zinc-900 hover:border-zinc-700 rounded-none px-3 py-1 font-mono text-[11px] cursor-default"
-                          initial={{ opacity: 0, scale: 0.95 }}
-                          whileInView={{ opacity: 1, scale: 1 }}
-                          viewport={{ once: true }}
-                          transition={{ duration: 0.3, delay: index * 0.03 }}
+                          className="bg-zinc-900/50 hover:bg-[#FF3B30]/10 text-zinc-400 hover:text-white transition-all duration-300 border border-zinc-800 hover:border-zinc-700 rounded-none px-3 py-1 font-mono text-[10px] cursor-default"
                         >
                           {skill}
-                        </motion.span>
+                        </span>
                       ))}
                     </div>
-                  </div>
+                  </motion.div>
                 ))}
               </div>
             </div>
@@ -317,6 +343,6 @@ export default function AboutSection() {
         </div>
 
       </div>
-    </section>
+    </motion.section>
   );
 }
