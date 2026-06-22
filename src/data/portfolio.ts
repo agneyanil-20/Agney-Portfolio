@@ -86,7 +86,7 @@ export const PORTFOLIO_DATA = {
       year: "2026",
       tagline: "A premium automotive web experience crafted to bring luxury, performance, and trust into a modern digital environment.",
       description: "Designed in Figma, the project explores how thoughtful user experience and elegant visual design can transform the way customers interact with luxury vehicle brands online.",
-      imageUrl: "https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?auto=format&fit=crop&w=1200&q=80",
+      imageUrl: "https://res.cloudinary.com/demmybfne/image/upload/v1782135604/Untitled_desighhn_avr4mb.jpg",
       details: [
         "Premium automotive website design",
         "Luxury-inspired visual language",
@@ -105,7 +105,7 @@ export const PORTFOLIO_DATA = {
       year: "2026",
       tagline: "A digital storytelling experience exploring folklore, mystery, and imagination through AI-assisted narratives and immersive interactions.",
       description: "Designed to blur the line between fiction and technology, Neeli transforms traditional storytelling into a dynamic experience where curiosity drives discovery.",
-      imageUrl: "https://images.unsplash.com/photo-1478760329108-5c3ed9d495a0?auto=format&fit=crop&w=1200&q=80",
+      imageUrl: "https://res.cloudinary.com/demmybfne/image/upload/v1782136236/Untitlesdfsdfd_design_asb5cz.jpg",
       details: [
         "AI-powered narrative generation and interactive story flow",
         "Responsive experience optimized for desktop and mobile devices",
@@ -121,7 +121,7 @@ export const PORTFOLIO_DATA = {
       year: "2025",
       tagline: "A modern digital photobooth designed to create memorable event experiences through instant capture, sharing, and interactive engagement.",
       description: "Built with simplicity and speed in mind, allowing users to focus on the moment while seamlessly generating shareable content.",
-      imageUrl: "https://images.unsplash.com/photo-1542038784456-1ea8e935640e?auto=format&fit=crop&w=1200&q=80",
+      imageUrl: "https://res.cloudinary.com/demmybfne/image/upload/v1782136614/photobooth1_wuqtdt.jpg",
       details: [
         "Fast image capture and processing workflow",
         "Mobile-first experience for events and social sharing",
@@ -137,7 +137,7 @@ export const PORTFOLIO_DATA = {
       year: "2026",
       tagline: "An experimental digital sketchbook for documenting, exploring, and interacting with sound-based ideas, concepts, and audio experiences.",
       description: "Created as a space for experimentation where technology, audio, and design converge into a single creative workflow.",
-      imageUrl: "https://images.unsplash.com/photo-1511379938547-c1f69419868d?auto=format&fit=crop&w=1200&q=80",
+      imageUrl: "https://res.cloudinary.com/demmybfne/image/upload/v1782136970/Sound_Sketchbook_wqxlty.jpg",
       details: [
         "Interactive audio-first user experience",
         "Lightweight architecture for smooth playback and navigation",
