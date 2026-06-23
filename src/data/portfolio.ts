@@ -170,43 +170,34 @@ export const PORTFOLIO_DATA = {
   photography: [
     {
       id: "photo-1",
-      imageUrl: "https://images.unsplash.com/photo-1518005020951-eccb494ad742?auto=format&fit=crop&w=1000&q=80",
-      caption: "Spiraling raw-concrete staircase reflecting natural northern light.",
-      location: "Kulturhuset, Stockholm",
-      coordinates: "59.3323° N, 18.0645° E",
-      date: "Nov 2025"
+      imageUrl: "https://res.cloudinary.com/demmybfne/image/upload/v1782229383/WhatsApp_Image_2026-06-23_at_9.09.38_PM_kmgjnv.jpg",
+      caption: "Coastal observations and architectural contrasts.",
+      location: "Thalassery",
+      coordinates: "11.7491° N, 75.4890° E"
     },
     {
       id: "photo-2",
-      imageUrl: "https://images.unsplash.com/photo-1449034446853-66c86144b0ad?auto=format&fit=crop&w=1000&q=80",
-      caption: "Abstract geometry of modern suspension cables crossing negative sky space.",
-      location: "Höga Kusten Bridge, Sweden",
-      coordinates: "62.7972° N, 17.9383° E",
-      date: "Sep 2025"
+      imageUrl: "https://res.cloudinary.com/demmybfne/image/upload/v1782229382/WhatsApp_Image_2026-06-23_at_9.09.37_PM_qgowuu.jpg",
+      caption: "Urban geometry and industrial textures of the port city.",
+      location: "Kochi",
+      coordinates: "9.9312° N, 76.2673° E",
+      date: "Jun 2026"
     },
     {
       id: "photo-3",
-      imageUrl: "https://images.unsplash.com/photo-1549490349-8643362247b5?auto=format&fit=crop&w=1000&q=80",
-      caption: "Stark shadow cast by brutalist structural columns during winter solstice.",
-      location: "Stockholm University, SE",
-      coordinates: "59.3644° N, 18.0583° E",
-      date: "Dec 2025"
+      imageUrl: "https://res.cloudinary.com/demmybfne/image/upload/v1782229382/WhatsApp_Image_2026-06-23_at_9.09.37_PM_1_xpcdbr.jpg",
+      caption: "The profound expression and detail of Kadhakali performance art.",
+      location: "Kadhakali",
+      coordinates: "Kerala, India",
+      date: "Jun 2026"
     },
     {
       id: "photo-4",
-      imageUrl: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1000&q=80",
-      caption: "Vertical monolithic block concrete texture against raw Scandinavian rock.",
-      location: "Nacka Strand, SE",
-      coordinates: "59.3167° N, 18.1500° E",
-      date: "Mar 2026"
-    },
-    {
-      id: "photo-5",
-      imageUrl: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1000&q=80",
-      caption: "Symmetrical layout of ocean waves on cold sands during early sunrise blur.",
-      location: "Visby Beach, Gotland",
-      coordinates: "57.6349° N, 18.2913° E",
-      date: "Apr 2026"
+      imageUrl: "https://res.cloudinary.com/demmybfne/image/upload/v1782229382/WhatsApp_Image_2026-06-23_at_9.09.35_PM_ihwtoy.jpg",
+      caption: "Exploring visual silence through minimalist compositions.",
+      location: "Kerala",
+      coordinates: "India",
+      date: "Jun 2026"
     }
   ] as Photo[]
 };

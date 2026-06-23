@@ -32,10 +32,10 @@ export default function ProjectsSection() {
       viewport={{ once: true, margin: "-100px" }}
       transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
     >
-      <div className="max-w-7xl mx-auto flex flex-col gap-16 md:gap-24">
+      <div className="max-w-7xl mx-auto flex flex-col gap-12">
         
         {/* Section Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 border-b border-zinc-900 pb-12">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 border-b border-zinc-900 pb-8">
           <div className="flex flex-col gap-4">
             <div className="flex items-baseline gap-4 md:gap-8">
               <h2 className="font-display text-5xl md:text-8xl font-black tracking-tighter leading-none text-white">
@@ -163,26 +163,6 @@ export default function ProjectsSection() {
               </div>
             </motion.div>
           ))}
-        </div>
-
-        {/* Global Statistics / Callout */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 border-t border-zinc-900 pt-16">
-          <div className="flex flex-col gap-2">
-            <span className="font-mono text-[10px] text-zinc-600 uppercase tracking-widest">Total Projects</span>
-            <span className="font-display text-4xl font-black text-white">{PORTFOLIO_DATA.projects.length}+</span>
-          </div>
-          <div className="flex flex-col gap-2">
-            <span className="font-mono text-[10px] text-zinc-600 uppercase tracking-widest">Total Sprints</span>
-            <span className="font-display text-4xl font-black text-white">200+</span>
-          </div>
-          <div className="flex flex-col gap-2">
-            <span className="font-mono text-[10px] text-[#FF3B30] uppercase tracking-widest font-black">AI Prototypes</span>
-            <span className="font-display text-4xl font-black text-white">12+</span>
-          </div>
-          <div className="flex flex-col gap-2">
-            <span className="font-mono text-[10px] text-zinc-600 uppercase tracking-widest">Client Satisfaction</span>
-            <span className="font-display text-4xl font-black text-white">100%</span>
-          </div>
         </div>
 
       </div>

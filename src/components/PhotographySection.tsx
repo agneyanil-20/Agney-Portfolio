@@ -35,17 +35,14 @@ export default function PhotographySection() {
       viewport={{ once: true, margin: "-100px" }}
       transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
     >
-      <div className="max-w-7xl mx-auto flex flex-col gap-12">
+      <div className="max-w-7xl mx-auto flex flex-col gap-10">
         
         {/* Section Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between border-b border-zinc-800 pb-8 gap-4">
+        <div className="flex flex-col md:flex-row md:items-end justify-between border-b border-zinc-800 pb-6 gap-4">
           <div className="flex items-baseline gap-4 md:gap-8">
             <h2 className="font-display text-5xl md:text-8xl font-black tracking-tighter leading-none text-white">
               Photography
             </h2>
-            <div className="font-mono text-xs md:text-sm text-zinc-500 uppercase tracking-widest leading-relaxed">
-              / MONOCHROME OBSERVATIONS
-            </div>
           </div>
           
           {/* Slider Controllers */}
@@ -91,7 +88,7 @@ export default function PhotographySection() {
                   src={photo.imageUrl}
                   alt={photo.caption}
                   referrerPolicy="no-referrer"
-                  className="w-full h-full object-cover grayscale contrast-125 hover:scale-102 transition-transform duration-700 hover:brightness-105"
+                  className="w-full h-full object-cover contrast-125 hover:scale-102 transition-transform duration-700 hover:brightness-105"
                   draggable={false}
                 />
                 
@@ -128,8 +125,8 @@ export default function PhotographySection() {
 
         {/* Footnote information regarding physical hardware specifications */}
         <div className="w-full border-t border-zinc-900 pt-6 flex flex-col md:flex-row justify-between text-[10px] font-mono text-zinc-600 uppercase tracking-widest">
-          <span>Camera Gear: Hassleblad 500C / Kodak TRI-X 400 Film</span>
-          <span>Archival prints processed in Stockholm darkrooms</span>
+          <span>Camera Gear: vivo x200 fe</span>
+          <span>Digital Journal / Visual Narratives</span>
         </div>
 
       </div>
@@ -159,12 +156,12 @@ export default function PhotographySection() {
               className="max-w-4xl w-full flex flex-col gap-6"
               onClick={(e) => e.stopPropagation()} // Stop closing click propagation
             >
-              <div className="relative aspect-[4/3] md:aspect-[3/2] w-full bg-zinc-950 border border-zinc-800 overflow-hidden">
+              <div className="relative w-full max-h-[70vh] flex items-center justify-center bg-zinc-950 border border-zinc-800 overflow-hidden">
                 <img
                   src={activePhoto.imageUrl}
                   alt={activePhoto.caption}
                   referrerPolicy="no-referrer"
-                  className="w-full h-full object-cover grayscale contrast-115"
+                  className="max-w-full max-h-[70vh] object-contain contrast-115"
                 />
               </div>
 

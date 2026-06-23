@@ -150,7 +150,7 @@ export default function App() {
       </div>
 
       {/* Main Sections Hierarchy */}
-      <main className="relative flex flex-col w-full pb-16">
+      <main className="relative flex flex-col w-full pb-8">
         {/* Fullscreen Hero Cover Paragraph */}
         <HeroSection onNavigate={handleNavigate} />
 
@@ -165,7 +165,7 @@ export default function App() {
       </main>
 
       {/* Simple, Ultra-Minimalist Baseline Bottom Footer */}
-      <footer className="w-full bg-black py-16 px-6 md:px-12 lg:px-24 border-t border-zinc-950 font-mono text-[10px] text-zinc-500 flex flex-col md:flex-row justify-between items-center gap-6">
+      <footer className="w-full bg-black py-8 px-6 md:px-12 lg:px-24 border-t border-zinc-950 font-mono text-[10px] text-zinc-500 flex flex-col md:flex-row justify-between items-center gap-6">
         <div className="flex flex-wrap justify-center md:justify-start gap-4">
           <a 
             href="https://www.instagram.com/agney__anil_kallil?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==" 
