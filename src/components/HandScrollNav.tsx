@@ -8,28 +8,44 @@ import { HandLandmarker, FilesetResolver } from "@mediapipe/tasks-vision";
 
 // Beautiful custom pixel art icons matching the Moon & Sun toggle
 const HAND_PIXELS = [
-  0, 1, 0, 1, 0, 1, 0, 1,
-  0, 1, 0, 1, 0, 1, 0, 1,
-  0, 1, 1, 1, 1, 1, 1, 1,
-  1, 1, 1, 1, 1, 1, 1, 1,
-  1, 1, 1, 1, 1, 1, 1, 1,
-  0, 1, 1, 1, 1, 1, 1, 0,
-  0, 1, 1, 1, 1, 1, 1, 0,
-  0, 0, 1, 1, 1, 1, 0, 0
+  0, 1, 0, 1, 0, 1, 0, 0,
+  0, 1, 0, 1, 0, 1, 0, 0,
+  1, 1, 1, 1, 1, 1, 0, 0,
+  1, 1, 1, 1, 1, 1, 0, 0,
+  0, 1, 1, 1, 1, 1, 0, 0,
+  0, 1, 1, 1, 1, 0, 0, 0,
+  0, 0, 1, 1, 1, 0, 0, 0,
+  0, 0, 1, 1, 1, 0, 0, 0
 ];
 
-const CAM_PIXELS = [
+const SUN_PIXELS = [
+  0, 0, 1, 0, 0, 1, 0, 0,
+  0, 1, 0, 1, 1, 0, 1, 0,
+  1, 0, 1, 1, 1, 1, 0, 1,
   0, 1, 1, 1, 1, 1, 1, 0,
-  1, 0, 0, 0, 0, 1, 0, 1,
+  0, 1, 1, 1, 1, 1, 1, 0,
   1, 0, 1, 1, 1, 1, 0, 1,
-  1, 0, 1, 0, 0, 1, 0, 1,
-  1, 0, 1, 0, 0, 1, 0, 1,
-  1, 0, 1, 1, 1, 1, 0, 1,
-  1, 0, 0, 0, 0, 0, 0, 1,
-  1, 1, 1, 1, 1, 1, 1, 1
+  0, 1, 0, 1, 1, 0, 1, 0,
+  0, 0, 1, 0, 0, 1, 0, 0
 ];
 
-export default function HandScrollNav() {
+const MOON_PIXELS = [
+  0, 0, 1, 1, 1, 0, 0, 0,
+  0, 1, 1, 1, 1, 1, 0, 0,
+  1, 1, 1, 1, 0, 0, 0, 0,
+  1, 1, 1, 0, 0, 0, 0, 0,
+  1, 1, 1, 0, 0, 0, 0, 0,
+  1, 1, 1, 1, 0, 0, 0, 0,
+  0, 1, 1, 1, 1, 1, 0, 0,
+  0, 0, 1, 1, 1, 0, 0, 0
+];
+
+interface HandScrollNavProps {
+  theme?: "dark" | "light";
+  setTheme?: (theme: "dark" | "light") => void;
+}
+
+export default function HandScrollNav({ theme, setTheme }: HandScrollNavProps) {
   const [isActive, setIsActive] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [isGuideOpen, setIsGuideOpen] = useState(false);
@@ -536,74 +552,100 @@ export default function HandScrollNav() {
 
   return (
     <>
-      <div className="fixed bottom-6 left-6 md:bottom-8 md:left-12 z-50 flex flex-col items-start gap-2">
-        {/* Sleek Floating control switcher toggling camera panel activation */}
-        <div className="flex items-center gap-1.5 shadow-xl bg-black border border-zinc-800 p-1.5 keep-dark">
+      <div className="fixed top-6 right-6 md:top-8 md:right-12 z-50 flex flex-col items-end gap-2">
+        {/* Top Right Controls Group: Hand Motion Gesture & Theme Switch */}
+        <div className="flex items-center gap-2">
+          {/* Hand Motion Gesture Trigger (Icon Only) */}
           <button
             onClick={handleToggle}
-            className={`group focus:outline-none p-1.5 border border-zinc-800 hover:border-[#FF3B30] bg-[#0c0c0c] transition-all duration-300 cursor-pointer select-none`}
-            title={isActive ? "Disable Touchless Scrolling" : "Activate Touchless Scrolling"}
+            className={`group focus:outline-none p-1.5 border ${
+              isActive
+                ? "border-[#FF3B30] bg-[#140808] shadow-[0_0_12px_rgba(255,59,48,0.35)]"
+                : "border-zinc-800 hover:border-[#FF3B30] bg-[#0c0c0c]"
+            } shadow-lg rounded-none transition-all duration-300 cursor-pointer select-none keep-dark`}
+            title={isActive ? "Disable Hand Gesture Control" : "Enable Touchless Hand Gesture Navigation"}
             data-cursor="interactive"
           >
-            {isActive ? (
-              /* CAM / RECORDING ICON REPRESENTATION */
-              <div className="grid grid-cols-8 gap-[1px] w-[18px] h-[18px]">
-                {CAM_PIXELS.map((p, i) => (
-                  <div
-                    key={`cam-${i}`}
-                    className={`w-full h-full ${
-                      p === 1 ? "bg-[#FF3B30] transition-colors duration-300" : "bg-transparent"
-                    }`}
-                  />
-                ))}
-              </div>
-            ) : (
-              /* HAND SENSOR TARGET ICON */
-              <div className="grid grid-cols-8 gap-[1px] w-[18px] h-[18px]">
-                {HAND_PIXELS.map((p, i) => (
-                  <div
-                    key={`hand-${i}`}
-                    className={`w-full h-full ${
-                      p === 1 ? "bg-white group-hover:bg-[#FF3B30] transition-colors duration-300" : "bg-transparent"
-                    }`}
-                  />
-                ))}
-              </div>
-            )}
+            <div className="grid grid-cols-8 gap-[1px] w-[18px] h-[18px]">
+              {HAND_PIXELS.map((p, i) => (
+                <div
+                  key={`hand-${i}`}
+                  className={`w-full h-full ${
+                    p === 1
+                      ? isActive
+                        ? "bg-[#FF3B30]"
+                        : "bg-white group-hover:bg-[#FF3B30] transition-colors duration-300"
+                      : "bg-transparent"
+                  }`}
+                />
+              ))}
+            </div>
           </button>
 
-          <span className="font-mono text-[9px] uppercase tracking-widest text-zinc-400 px-2 select-none">
-            {isActive ? "HAND_NAV: ON" : "HAND_NAV: OFF"}
-          </span>
-
-          {isActive && (
+          {/* Theme Switcher Button */}
+          {setTheme && (
             <button
-              onClick={() => setIsMinimized(!isMinimized)}
-              className="text-[9px] hover:text-[#FF3B30] text-zinc-500 font-mono tracking-wider px-2 border-l border-zinc-850"
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              className="group focus:outline-none p-1.5 border border-zinc-800 hover:border-[#FF3B30] bg-[#0c0c0c] shadow-lg rounded-none transition-all duration-300 cursor-pointer select-none theme-toggle keep-dark"
+              title={`Switch to ${theme === "dark" ? "Light" : "Dark"} Mode`}
+              data-cursor="interactive"
             >
-              {isMinimized ? "SHOW" : "HIDE"}
+              {theme === "dark" ? (
+                <div className="grid grid-cols-8 gap-[1px] w-[18px] h-[18px]">
+                  {SUN_PIXELS.map((p, i) => (
+                    <div
+                      key={`sun-${i}`}
+                      className={`w-full h-full ${
+                        p === 1
+                          ? "bg-white group-hover:bg-[#FF3B30] transition-colors duration-300"
+                          : "bg-transparent"
+                      }`}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="grid grid-cols-8 gap-[1px] w-[18px] h-[18px]">
+                  {MOON_PIXELS.map((p, i) => (
+                    <div
+                      key={`moon-${i}`}
+                      className={`w-full h-full ${
+                        p === 1
+                          ? "bg-white group-hover:bg-[#FF3B30] transition-colors duration-300"
+                          : "bg-transparent"
+                      }`}
+                    />
+                  ))}
+                </div>
+              )}
             </button>
           )}
-
-          <button
-            onClick={() => setIsGuideOpen(!isGuideOpen)}
-            className="text-[9px] hover:text-[#FF3B30] text-zinc-500 font-mono tracking-wider px-2 border-l border-zinc-850 cursor-pointer select-none"
-            title="Toggle Gesture Control Guide (Press G)"
-            data-cursor="interactive"
-          >
-            GUIDE [G]
-          </button>
         </div>
 
         {/* Floating active webcam preview lens panel container */}
         {isActive && !isMinimized && (
-          <div className="w-64 border border-zinc-800 bg-[#0c0c0e] shadow-2xl p-1.5 flex flex-col gap-1.5 keep-dark">
+          <div className="w-64 border border-zinc-800 bg-[#0c0c0e] shadow-2xl p-1.5 flex flex-col gap-1.5 keep-dark animate-fade-in mt-1">
             <div className="flex items-center justify-between text-[8px] font-mono text-zinc-500 border-b border-zinc-900 pb-1 px-1">
               <span className="flex items-center gap-1">
                 <span className={`w-1.5 h-1.5 rounded-full ${handDetected ? "bg-emerald-500 animate-pulse" : "bg-[#FF3B30] animate-ping"}`}></span>
                 {handDetected ? "HAND ACQUIRED" : "ALIGNING..."}
               </span>
-              <span>{fps} FPS</span>
+              <div className="flex items-center gap-2">
+                <span>{fps} FPS</span>
+                <button
+                  onClick={() => setIsGuideOpen(true)}
+                  className="hover:text-[#FF3B30] transition-colors text-zinc-400"
+                  title="Gesture Guide"
+                >
+                  [G]
+                </button>
+                <button
+                  onClick={() => setIsMinimized(true)}
+                  className="hover:text-[#FF3B30] transition-colors text-zinc-400"
+                  title="Hide Preview"
+                >
+                  [HIDE]
+                </button>
+              </div>
             </div>
 
             <div className="relative aspect-video bg-black overflow-hidden border border-zinc-900">

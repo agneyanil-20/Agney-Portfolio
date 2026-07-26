@@ -26,7 +26,7 @@ export default function HeroSection({ onNavigate }: HeroSectionProps) {
   };
 
   return (
-    <section id="hero" className="relative min-h-screen w-full flex flex-col justify-between px-6 md:px-12 lg:px-24 py-12 bg-black overflow-hidden select-none">
+    <section id="hero" className="relative min-h-screen w-full flex flex-col justify-between px-6 md:px-12 lg:px-24 py-12 bg-transparent overflow-hidden select-none">
       {/* Non-rendering header placeholder for spacing balance */}
       <div className="w-full h-4" />
 

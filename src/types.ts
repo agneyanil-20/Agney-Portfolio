@@ -14,6 +14,8 @@ export interface Project {
   details: string[];
   technologies: string[];
   projectUrl?: string;
+  badge?: string;
+  buttonText?: string;
 }
 
 export interface Photo {

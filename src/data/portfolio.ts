@@ -98,41 +98,62 @@ export const PORTFOLIO_DATA = {
       "Bridging design and development to rapidly prototype and ship digital products."
     ]
   },
-  projects: [
+  featuredWork: [
     {
       id: "luxe-moto",
       title: "Luxe Moto",
       category: "Automotive UI/UX Concept",
       year: "2026",
       tagline: "A premium automotive web experience crafted to bring luxury, performance, and trust into a modern digital environment.",
-      description: "Designed in Figma, the project explores how thoughtful user experience and elegant visual design can transform the way customers interact with luxury vehicle brands online.",
+      description: "Designed in Figma, the project explores how thoughtful user experience and elegant visual design can transform customer interaction with luxury vehicle brands online.",
       imageUrl: "https://res.cloudinary.com/demmybfne/image/upload/v1782135604/Untitled_desighhn_avr4mb.jpg",
       details: [
         "Premium automotive website design",
         "Luxury-inspired visual language",
         "High-end user experience design",
-        "Responsive interface exploration",
-        "Customer-centric navigation flow",
-        "Modern design system approach"
+        "Customer-centric navigation flow"
       ],
-      technologies: ["Figma", "UI Design", "UX Design", "User Flows", "Wireframing", "Prototyping"],
-      projectUrl: "https://luxemoto.in/"
+      technologies: ["Figma", "UI/UX Design", "User Flows", "Prototyping"],
+      projectUrl: "https://luxemoto.in/",
+      buttonText: "View Case Study"
     },
     {
-      id: "neeli",
-      title: "Neeli",
-      category: "Experimental Storytelling Platform",
-      year: "2026",
-      tagline: "A digital storytelling experience exploring folklore, mystery, and imagination through AI-assisted narratives and immersive interactions.",
-      description: "Designed to blur the line between fiction and technology, Neeli transforms traditional storytelling into a dynamic experience where curiosity drives discovery.",
-      imageUrl: "https://res.cloudinary.com/demmybfne/image/upload/v1782136236/Untitlesdfsdfd_design_asb5cz.jpg",
+      id: "cntrl-m",
+      title: "Cntrl M",
+      category: "Digital Agency & Design System",
+      year: "2025",
+      tagline: "Creative direction, website design, and scalable design system empowering high-throughput creative production.",
+      description: "Comprehensive product design and brand platform created for creative team management, client deliverables, and rapid agency execution.",
+      imageUrl: "https://res.cloudinary.com/demmybfne/image/upload/v1782229383/WhatsApp_Image_2026-06-23_at_9.09.38_PM_kmgjnv.jpg",
       details: [
-        "AI-powered narrative generation and interactive story flow",
-        "Responsive experience optimized for desktop and mobile devices",
-        "Immersive visual language inspired by folklore and atmospheric storytelling"
+        "Creative direction & web architecture",
+        "Scalable client design system",
+        "Internal project management workflows",
+        "Client branding & digital guidelines"
       ],
-      technologies: ["React", "Next.js", "Tailwind CSS", "AI Integration"],
-      projectUrl: "https://neeli.vercel.app"
+      technologies: ["Creative Direction", "UI/UX Design", "Design Systems", "Web Architecture"],
+      projectUrl: "https://www.behance.net/agneyanil",
+      buttonText: "View Case Study"
+    }
+  ] as Project[],
+  aiProducts: [
+    {
+      id: "sound-sketchbook",
+      title: "Sound Sketchbook",
+      category: "Creative Audio Exploration Platform",
+      year: "2026",
+      tagline: "An experimental digital sketchbook for documenting, exploring, and interacting with sound-based ideas, concepts, and audio experiences.",
+      description: "Created as a space for experimentation where technology, audio APIs, and design converge into a single creative workflow.",
+      imageUrl: "https://res.cloudinary.com/demmybfne/image/upload/v1782136970/Sound_Sketchbook_wqxlty.jpg",
+      details: [
+        "Interactive audio-first user experience",
+        "Lightweight architecture for smooth playback and navigation",
+        "Designed to encourage exploration and creative discovery"
+      ],
+      technologies: ["React", "Next.js", "Audio APIs", "Tailwind CSS"],
+      projectUrl: "https://sound-sketchbook.vercel.app",
+      badge: "AI PRODUCT",
+      buttonText: "Live Demo"
     },
     {
       id: "photobooth",
@@ -148,23 +169,101 @@ export const PORTFOLIO_DATA = {
         "Optimized interface designed for high-volume user interaction"
       ],
       technologies: ["React", "Next.js", "Tailwind CSS"],
-      projectUrl: "https://photobooth-agney.vercel.app"
+      projectUrl: "https://photobooth-agney.vercel.app",
+      badge: "AI PRODUCT",
+      buttonText: "Live Demo"
+    },
+    {
+      id: "neeli",
+      title: "Neeli",
+      category: "Experimental Storytelling Platform",
+      year: "2026",
+      tagline: "A digital storytelling experience exploring folklore, mystery, and imagination through AI-assisted narratives and immersive interactions.",
+      description: "Designed to blur the line between fiction and technology, Neeli transforms traditional storytelling into a dynamic experience where curiosity drives discovery.",
+      imageUrl: "https://res.cloudinary.com/demmybfne/image/upload/v1782136236/Untitlesdfsdfd_design_asb5cz.jpg",
+      details: [
+        "AI-powered narrative generation and interactive story flow",
+        "Responsive experience optimized for desktop and mobile devices",
+        "Immersive visual language inspired by folklore and atmospheric storytelling"
+      ],
+      technologies: ["React", "Next.js", "Tailwind CSS", "AI Integration"],
+      projectUrl: "https://neeli.vercel.app",
+      badge: "AI PRODUCT",
+      buttonText: "Live Demo"
+    }
+  ] as Project[],
+  projects: [
+    {
+      id: "luxe-moto",
+      title: "Luxe Moto",
+      category: "Automotive UI/UX Concept",
+      year: "2026",
+      tagline: "A premium automotive web experience crafted to bring luxury, performance, and trust into a modern digital environment.",
+      description: "Designed in Figma, the project explores how thoughtful user experience and elegant visual design can transform customer interaction with luxury vehicle brands online.",
+      imageUrl: "https://res.cloudinary.com/demmybfne/image/upload/v1782135604/Untitled_desighhn_avr4mb.jpg",
+      details: [
+        "Premium automotive website design",
+        "Luxury-inspired visual language",
+        "High-end user experience design"
+      ],
+      technologies: ["Figma", "UI/UX Design", "User Flows", "Prototyping"],
+      projectUrl: "https://luxemoto.in/",
+      buttonText: "View Case Study"
+    },
+    {
+      id: "cntrl-m",
+      title: "Cntrl M",
+      category: "Digital Agency & Design System",
+      year: "2025",
+      tagline: "Creative direction, website design, and scalable design system.",
+      description: "Comprehensive product design and brand platform for creative production.",
+      imageUrl: "https://res.cloudinary.com/demmybfne/image/upload/v1782229383/WhatsApp_Image_2026-06-23_at_9.09.38_PM_kmgjnv.jpg",
+      details: ["Creative direction & web architecture", "Scalable client design system"],
+      technologies: ["Creative Direction", "UI/UX Design", "Design Systems"],
+      projectUrl: "https://www.behance.net/agneyanil",
+      buttonText: "View Case Study"
     },
     {
       id: "sound-sketchbook",
       title: "Sound Sketchbook",
       category: "Creative Audio Exploration Platform",
       year: "2026",
-      tagline: "An experimental digital sketchbook for documenting, exploring, and interacting with sound-based ideas, concepts, and audio experiences.",
-      description: "Created as a space for experimentation where technology, audio, and design converge into a single creative workflow.",
+      tagline: "An experimental digital sketchbook for audio experiences.",
+      description: "A creative canvas where audio APIs and design converge.",
       imageUrl: "https://res.cloudinary.com/demmybfne/image/upload/v1782136970/Sound_Sketchbook_wqxlty.jpg",
-      details: [
-        "Interactive audio-first user experience",
-        "Lightweight architecture for smooth playback and navigation",
-        "Designed to encourage exploration and creative discovery"
-      ],
-      technologies: ["React", "Next.js", "Audio APIs", "Tailwind CSS"],
-      projectUrl: "https://sound-sketchbook.vercel.app"
+      details: ["Interactive audio-first user experience"],
+      technologies: ["React", "Next.js", "Audio APIs"],
+      projectUrl: "https://sound-sketchbook.vercel.app",
+      badge: "AI PRODUCT",
+      buttonText: "Live Demo"
+    },
+    {
+      id: "photobooth",
+      title: "Photobooth",
+      category: "Interactive Event Photography Experience",
+      year: "2025",
+      tagline: "A modern digital photobooth designed for instant capture and sharing.",
+      description: "Mobile-first instant photo processing workflow.",
+      imageUrl: "https://res.cloudinary.com/demmybfne/image/upload/v1782136614/photobooth1_wuqtdt.jpg",
+      details: ["Fast image capture and processing workflow"],
+      technologies: ["React", "Next.js", "Tailwind CSS"],
+      projectUrl: "https://photobooth-agney.vercel.app",
+      badge: "AI PRODUCT",
+      buttonText: "Live Demo"
+    },
+    {
+      id: "neeli",
+      title: "Neeli",
+      category: "Experimental Storytelling Platform",
+      year: "2026",
+      tagline: "A digital storytelling experience exploring folklore through AI.",
+      description: "Blurring fiction and technology with generative narrative flows.",
+      imageUrl: "https://res.cloudinary.com/demmybfne/image/upload/v1782136236/Untitlesdfsdfd_design_asb5cz.jpg",
+      details: ["AI-powered narrative generation"],
+      technologies: ["React", "Next.js", "AI Integration"],
+      projectUrl: "https://neeli.vercel.app",
+      badge: "AI PRODUCT",
+      buttonText: "Live Demo"
     }
   ] as Project[],
   photography: [

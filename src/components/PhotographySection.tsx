@@ -29,7 +29,7 @@ export default function PhotographySection() {
   return (
     <motion.section 
       id="photography" 
-      className="w-full bg-black text-white px-6 md:px-12 lg:px-24 py-8 md:py-12 border-t border-zinc-900 overflow-hidden relative"
+      className="w-full bg-transparent text-white px-6 md:px-12 lg:px-24 py-8 md:py-12 border-t border-zinc-900 overflow-hidden relative"
       initial={{ opacity: 0, y: 40 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-100px" }}
@@ -38,38 +38,38 @@ export default function PhotographySection() {
       <div className="max-w-7xl mx-auto flex flex-col gap-10">
         
         {/* Section Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between border-b border-zinc-800 pb-6 gap-4">
+        <div className="flex flex-col md:flex-row md:items-end justify-between border-b border-zinc-800 pb-6 gap-4 text-balance">
           <div className="flex items-baseline gap-4 md:gap-8">
             <h2 className="font-display text-5xl md:text-8xl font-black tracking-tighter leading-none text-white">
               Photography
             </h2>
           </div>
-          
-          {/* Slider Controllers */}
-          <div className="flex items-center gap-3">
-            <button 
-              onClick={() => scroll("left")}
-              className="p-3 border border-zinc-800 hover:border-white rounded-full bg-zinc-950 transition-colors text-zinc-400 hover:text-white cursor-pointer"
-              title="Scroll Left"
-            >
-              <ArrowLeft className="w-4 h-4" />
-            </button>
-            <button 
-              onClick={() => scroll("right")}
-              className="p-3 border border-zinc-800 hover:border-white rounded-full bg-zinc-950 transition-colors text-zinc-400 hover:text-white cursor-pointer"
-              title="Scroll Right"
-            >
-              <ArrowRight className="w-4 h-4" />
-            </button>
-          </div>
         </div>
 
-        {/* Horizontal Drag & Scroll Photographic Track */}
-        <div 
-          ref={scrollContainerRef}
-          className="flex overflow-x-auto gap-8 pb-10 scrollbar-none snap-x snap-mandatory cursor-grab active:cursor-grabbing scroll-smooth"
-          style={{ scrollbarWidth: "none" }}
-        >
+        {/* Horizontal Drag & Scroll Photographic Track Wrapper */}
+        <div className="relative group/slider">
+          {/* Navigation Buttons - Glass Style */}
+          <button 
+            onClick={() => scroll("left")}
+            className="absolute left-4 top-[40%] -translate-y-1/2 z-20 p-4 rounded-full bg-white/5 backdrop-blur-md border border-white/10 text-white/40 hover:text-white hover:bg-white/10 hover:border-[#FF3B30] transition-all duration-500 opacity-0 group-hover/slider:opacity-100 hidden md:flex items-center justify-center cursor-pointer shadow-2xl"
+            title="Scroll Left"
+          >
+            <ArrowLeft className="w-6 h-6" />
+          </button>
+          
+          <button 
+            onClick={() => scroll("right")}
+            className="absolute right-4 top-[40%] -translate-y-1/2 z-20 p-4 rounded-full bg-white/5 backdrop-blur-md border border-white/10 text-white/40 hover:text-white hover:bg-white/10 hover:border-[#FF3B30] transition-all duration-500 opacity-0 group-hover/slider:opacity-100 hidden md:flex items-center justify-center cursor-pointer shadow-2xl"
+            title="Scroll Right"
+          >
+            <ArrowRight className="w-6 h-6" />
+          </button>
+
+          <div 
+            ref={scrollContainerRef}
+            className="flex overflow-x-auto gap-8 pb-10 scrollbar-none snap-x snap-mandatory cursor-grab active:cursor-grabbing scroll-smooth"
+            style={{ scrollbarWidth: "none" }}
+          >
           {PORTFOLIO_DATA.photography.map((photo, index) => (
             <motion.div
               key={photo.id}
@@ -122,12 +122,13 @@ export default function PhotographySection() {
             </motion.div>
           ))}
         </div>
+      </div>
 
-        {/* Footnote information regarding physical hardware specifications */}
-        <div className="w-full border-t border-zinc-900 pt-6 flex flex-col md:flex-row justify-between text-[10px] font-mono text-zinc-600 uppercase tracking-widest">
-          <span>Camera Gear: vivo x200 fe</span>
-          <span>Digital Journal / Visual Narratives</span>
-        </div>
+      {/* Footnote information regarding physical hardware specifications */}
+      <div className="w-full border-t border-zinc-900 pt-6 flex flex-col md:flex-row justify-between text-[10px] font-mono text-zinc-600 uppercase tracking-widest">
+        <span>Camera Gear: vivo x200 fe</span>
+        <span>Digital Journal / Visual Narratives</span>
+      </div>
 
       </div>
 

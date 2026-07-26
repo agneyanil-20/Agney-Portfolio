@@ -41,7 +41,7 @@ export default function AboutSection() {
   return (
     <motion.section 
       id="about" 
-      className="w-full bg-black text-white px-6 md:px-12 lg:px-24 py-8 md:py-12 border-t border-zinc-900 overflow-hidden relative"
+      className="w-full bg-transparent text-white px-6 md:px-12 lg:px-24 py-8 md:py-12 border-t border-zinc-900 overflow-hidden relative"
       initial={{ opacity: 0, y: 40 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-100px" }}
@@ -194,70 +194,89 @@ export default function AboutSection() {
             </div>
 
             {/* Professional Timeline */}
-            <div className="flex flex-col gap-4 pt-4">
-              <h3 className="font-mono text-zinc-500 text-xs tracking-widest uppercase">
-                // CAREER PATHWAY
-              </h3>
-              <div className="flex flex-col">
-                <AnimatePresence mode="popLayout">
-                  {visibleTimeline.map((item, index) => (
-                    <motion.div 
-                      key={`${item.company}-${item.role}-${index}`}
-                      className="flex flex-col py-6 border-b border-zinc-900 hover:bg-zinc-950/50 px-4 transition-colors duration-300"
-                      initial={{ opacity: 0, y: 15 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -15 }}
-                      viewport={{ once: true }}
-                      transition={{ duration: 0.4, delay: isExpanded ? 0 : index * 0.1 }}
-                    >
-                      <div className="flex flex-col md:flex-row justify-between items-baseline gap-2 mb-4">
-                        <div className="flex flex-col gap-1">
-                          <h4 className="font-display text-base md:text-lg font-bold text-white tracking-tight">
-                            {item.role}
-                          </h4>
-                          <span className="font-mono text-xs text-[#FF3B30] uppercase tracking-widest font-semibold italic">
-                            @ {item.company}
-                          </span>
+            <div className="flex flex-col gap-6 pt-4">
+              <div className="flex items-center gap-4 mb-2">
+                <h3 className="font-mono text-zinc-500 text-[10px] tracking-[0.3em] uppercase">
+                  // CAREER PATHWAY
+                </h3>
+                <div className="h-[1px] flex-grow bg-zinc-900" />
+              </div>
+              
+              <div className="relative pl-8">
+                {/* Vertical Timeline Line */}
+                <div className="absolute left-[3px] top-2 bottom-0 w-[1px] bg-zinc-900" />
+                
+                <div className="flex flex-col gap-12">
+                  <AnimatePresence mode="popLayout">
+                    {visibleTimeline.map((item, index) => (
+                      <motion.div 
+                        key={`${item.company}-${item.role}-${index}`}
+                        className="relative group"
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: 10 }}
+                        transition={{ duration: 0.5, delay: isExpanded ? 0 : index * 0.1 }}
+                      >
+                        {/* Timeline Marker */}
+                        <div className="absolute -left-[32px] top-1.5 flex items-center justify-center">
+                          <div className={`w-1.5 h-1.5 rounded-full transition-all duration-500 ${index === 0 ? 'bg-[#FF3B30] ring-4 ring-[#FF3B30]/20' : 'bg-zinc-800 group-hover:bg-zinc-600'}`} />
                         </div>
-                        <span className="font-mono text-[10px] text-zinc-500 bg-zinc-900/50 px-2 py-1 border border-zinc-800">
-                          {item.year}
-                        </span>
-                      </div>
 
-                      {item.details && (
-                        <ul className="flex flex-col gap-2.5 ml-1">
-                          {item.details.map((detail, idx) => (
-                            <li key={idx} className="flex gap-3 items-start group">
-                              <span className="w-1 h-1 rounded-full bg-zinc-700 mt-2 transition-colors group-hover:bg-[#FF3B30] flex-shrink-0" />
-                              <span className="text-zinc-400 text-xs md:text-sm font-light leading-relaxed tracking-wide">
-                                {detail}
-                              </span>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </motion.div>
-                  ))}
-                </AnimatePresence>
+                        <div className="flex flex-col gap-4">
+                          <div className="flex flex-col md:flex-row md:items-baseline justify-between gap-2">
+                            <div className="flex flex-col gap-1">
+                              <h4 className="font-display text-lg md:text-xl font-black text-white tracking-tight leading-none">
+                                {item.role}
+                              </h4>
+                              <div className="flex items-center gap-2">
+                                <span className="font-mono text-[10px] text-zinc-500 uppercase tracking-widest font-medium">
+                                  {item.company}
+                                </span>
+                                {index === 0 && (
+                                  <span className="px-1.5 py-0.5 bg-zinc-900 border border-zinc-800 text-[#FF3B30] text-[8px] font-mono tracking-tighter uppercase font-bold">
+                                    ACTIVE
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            <span className="font-mono text-[11px] text-zinc-400 bg-zinc-950 px-2 py-1 border border-zinc-900 tabular-nums">
+                              {item.year}
+                            </span>
+                          </div>
+
+                          {item.details && (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-3">
+                              {item.details.map((detail, idx) => (
+                                <div key={idx} className="flex gap-3 items-start group/detail">
+                                  <span className="w-1 h-[1px] bg-zinc-700 mt-2.5 transition-all duration-300 group-hover/detail:w-3 group-hover/detail:bg-[#FF3B30] flex-shrink-0" />
+                                  <p className="text-zinc-500 text-xs md:text-sm font-light leading-relaxed tracking-wide group-hover/detail:text-zinc-300 transition-colors">
+                                    {detail}
+                                  </p>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
+                </div>
 
                 {timeline.length > 2 && (
                   <motion.button
                     onClick={() => setIsExpanded(!isExpanded)}
-                    className="mt-8 self-start flex items-center gap-3 px-6 py-4 border border-zinc-800 hover:border-[#FF3B30] transition-all duration-300 group font-mono text-[10px] tracking-[0.2em] uppercase font-bold text-zinc-500 hover:text-white"
-                    whileHover={{ scale: 1.02 }}
+                    className="mt-12 flex items-center gap-4 px-8 py-4 bg-zinc-950 border border-zinc-900 hover:border-[#FF3B30] transition-all duration-500 group font-mono text-[11px] tracking-[0.2em] uppercase font-bold text-zinc-400 hover:text-white"
+                    whileHover={{ x: 5 }}
                     whileTap={{ scale: 0.98 }}
                   >
-                    {isExpanded ? (
-                      <>
-                        <Minus className="w-3.5 h-3.5 text-[#FF3B30]" />
-                        <span>Show Less</span>
-                      </>
-                    ) : (
-                      <>
-                        <Plus className="w-3.5 h-3.5 text-[#FF3B30]" />
-                        <span>Read More Experience</span>
-                      </>
-                    )}
+                    <div className="p-1 rounded-full bg-zinc-900 group-hover:bg-[#FF3B30] transition-colors">
+                      {isExpanded ? (
+                        <Minus className="w-3 h-3 text-white" />
+                      ) : (
+                        <Plus className="w-3 h-3 text-white" />
+                      )}
+                    </div>
+                    <span>{isExpanded ? "Collapse History" : "Load Full Experience"}</span>
                   </motion.button>
                 )}
               </div>
