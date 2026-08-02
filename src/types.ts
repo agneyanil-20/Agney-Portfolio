@@ -16,6 +16,7 @@ export interface Project {
   projectUrl?: string;
   badge?: string;
   buttonText?: string;
+  fullWriteup?: string;
 }
 
 export interface Photo {

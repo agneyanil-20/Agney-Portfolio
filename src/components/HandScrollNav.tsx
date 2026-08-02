@@ -56,6 +56,7 @@ export default function HandScrollNav({ theme, setTheme }: HandScrollNavProps) {
   const [scrollDirection, setScrollDirection] = useState<string>("STATIONARY");
   const [isHovering, setIsHovering] = useState(false);
   const [isClicked, setIsClicked] = useState(false);
+  const [cameraError, setCameraError] = useState<string | null>(null);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -225,6 +226,7 @@ export default function HandScrollNav({ theme, setTheme }: HandScrollNavProps) {
   // Initialize MediaPipe HandLandmarker when turning active
   const startTracking = async () => {
     try {
+      setCameraError(null);
       setStatusText("Initializing");
       setLoadingText("Loading WASM module...");
 
@@ -246,6 +248,11 @@ export default function HandScrollNav({ theme, setTheme }: HandScrollNavProps) {
       }
 
       setLoadingText("Accessing camera...");
+
+      if (!navigator?.mediaDevices?.getUserMedia) {
+        throw new Error("Webcam access is not supported or disabled in this browser context.");
+      }
+
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { width: 320, height: 240, facingMode: "user" },
         audio: false
@@ -264,10 +271,31 @@ export default function HandScrollNav({ theme, setTheme }: HandScrollNavProps) {
         };
       }
     } catch (err: any) {
-      console.error("Failed to boot hand sensor:", err);
+      const errName = err?.name || "";
+      const errMsg = err?.message || "";
+      const isPermissionDenied =
+        errName === "NotAllowedError" ||
+        errName === "PermissionDeniedError" ||
+        errName === "SecurityError" ||
+        errMsg.toLowerCase().includes("permission") ||
+        errMsg.toLowerCase().includes("denied");
+
+      const friendlyMsg = isPermissionDenied
+        ? "Camera permission denied. Please grant camera access in your browser or address bar settings to use touchless gesture navigation."
+        : errMsg || "Camera access failed or device is currently unavailable.";
+
+      console.warn("Hand sensor camera notice:", friendlyMsg);
+      setCameraError(friendlyMsg);
       setStatusText("Error");
-      setLoadingText(`Error: ${err.message || "Camera blocked"}`);
-      setIsActive(false);
+      setLoadingText("");
+
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current = null;
+      }
+      if (videoRef.current) {
+        videoRef.current.srcObject = null;
+      }
     }
   };
 
@@ -287,14 +315,17 @@ export default function HandScrollNav({ theme, setTheme }: HandScrollNavProps) {
     setStatusText("Off");
     setHandDetected(false);
     setScrollDirection("STATIONARY");
+    setLoadingText("");
   };
 
   // Switch state hand navigation trigger
   const handleToggle = () => {
-    if (isActive) {
+    if (isActive || cameraError) {
       stopTracking();
+      setCameraError(null);
       setIsActive(false);
     } else {
+      setCameraError(null);
       setIsActive(true);
     }
   };
@@ -621,16 +652,24 @@ export default function HandScrollNav({ theme, setTheme }: HandScrollNavProps) {
           )}
         </div>
 
-        {/* Floating active webcam preview lens panel container */}
-        {isActive && !isMinimized && (
-          <div className="w-64 border border-zinc-800 bg-[#0c0c0e] shadow-2xl p-1.5 flex flex-col gap-1.5 keep-dark animate-fade-in mt-1">
+        {/* Floating active webcam preview lens panel or error container */}
+        {(isActive || cameraError) && !isMinimized && (
+          <div className="w-68 md:w-72 border border-zinc-800 bg-[#0c0c0e] shadow-2xl p-2 flex flex-col gap-2 keep-dark animate-fade-in mt-1">
             <div className="flex items-center justify-between text-[8px] font-mono text-zinc-500 border-b border-zinc-900 pb-1 px-1">
               <span className="flex items-center gap-1">
-                <span className={`w-1.5 h-1.5 rounded-full ${handDetected ? "bg-emerald-500 animate-pulse" : "bg-[#FF3B30] animate-ping"}`}></span>
-                {handDetected ? "HAND ACQUIRED" : "ALIGNING..."}
+                <span
+                  className={`w-1.5 h-1.5 rounded-full ${
+                    cameraError
+                      ? "bg-[#FF3B30]"
+                      : handDetected
+                      ? "bg-emerald-500 animate-pulse"
+                      : "bg-amber-500 animate-ping"
+                  }`}
+                />
+                {cameraError ? "CAMERA ACCESS BLOCKED" : handDetected ? "HAND ACQUIRED" : "ALIGNING..."}
               </span>
               <div className="flex items-center gap-2">
-                <span>{fps} FPS</span>
+                {!cameraError && <span>{fps} FPS</span>}
                 <button
                   onClick={() => setIsGuideOpen(true)}
                   className="hover:text-[#FF3B30] transition-colors text-zinc-400"
@@ -639,66 +678,110 @@ export default function HandScrollNav({ theme, setTheme }: HandScrollNavProps) {
                   [G]
                 </button>
                 <button
-                  onClick={() => setIsMinimized(true)}
+                  onClick={() => {
+                    setIsActive(false);
+                    setCameraError(null);
+                  }}
                   className="hover:text-[#FF3B30] transition-colors text-zinc-400"
-                  title="Hide Preview"
+                  title="Close Widget"
                 >
-                  [HIDE]
+                  [CLOSE]
                 </button>
               </div>
             </div>
 
-            <div className="relative aspect-video bg-black overflow-hidden border border-zinc-900">
-              <video
-                ref={videoRef}
-                className="w-full h-full object-cover scale-x-[-1]"
-                autoPlay
-                playsInline
-                muted
-              />
-              <canvas
-                ref={canvasRef}
-                className="absolute top-0 left-0 w-full h-full scale-x-[-1] pointer-events-none"
-              />
-
-              {/* Micro-loading spinner mask overlay */}
-              {loadingText && (
-                <div className="absolute inset-0 bg-black/90 flex flex-col items-center justify-center p-3 text-center space-y-1">
-                  <div className="w-4 h-4 border border-t-[#FF3B30] border-zinc-800 rounded-full animate-spin"></div>
-                  <span className="text-[8px] font-mono uppercase tracking-widest text-zinc-500">{loadingText}</span>
+            {cameraError ? (
+              <div className="p-3 bg-[#180808] border border-[#FF3B30]/40 flex flex-col gap-2.5">
+                <div className="flex items-start gap-2">
+                  <span className="text-[#FF3B30] text-xs font-mono font-bold">⚠️</span>
+                  <div className="flex flex-col gap-1">
+                    <span className="font-mono text-[9px] uppercase font-bold text-[#FF3B30] tracking-wider">
+                      Permission Required
+                    </span>
+                    <p className="text-[10px] text-zinc-300 leading-relaxed font-sans">
+                      {cameraError}
+                    </p>
+                  </div>
                 </div>
-              )}
-
-              {/* Dynamic UI Debug indicator for easy timing optimization */}
-              {scrollDirection !== "STATIONARY" && (
-                <div
-                  className={`absolute bottom-1.5 right-1.5 px-2 py-0.5 text-[8px] font-mono uppercase tracking-widest font-bold text-white shadow-md transition-all ${
-                    scrollDirection === "COOLING_DOWN"
-                      ? "bg-amber-600 animate-pulse border border-amber-400"
-                      : scrollDirection.startsWith("SWIPE")
-                      ? "bg-[#FF3B30] border border-[#ff6961]"
-                      : "bg-emerald-650"
-                  }`}
-                >
-                  {scrollDirection === "COOLING_DOWN" && "COOLING DOWN..."}
-                  {scrollDirection === "SWIPE_DETECTED_DOWN" && "SWIPE DETECTED // DOWN"}
-                  {scrollDirection === "SWIPE_DETECTED_UP" && "SWIPE DETECTED // UP"}
+                <div className="flex items-center justify-end gap-2 pt-1.5 border-t border-zinc-900">
+                  <button
+                    onClick={() => {
+                      setCameraError(null);
+                      if (isActive) {
+                        startTracking();
+                      } else {
+                        setIsActive(true);
+                      }
+                    }}
+                    className="bg-[#FF3B30] hover:bg-white text-black font-mono text-[9px] font-bold px-2.5 py-1 uppercase tracking-wider transition-colors cursor-pointer"
+                  >
+                    Retry Access
+                  </button>
+                  <button
+                    onClick={() => {
+                      setCameraError(null);
+                      setIsActive(false);
+                    }}
+                    className="bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white font-mono text-[9px] px-2.5 py-1 border border-zinc-800 uppercase tracking-wider transition-colors cursor-pointer"
+                  >
+                    Dismiss
+                  </button>
                 </div>
-              )}
-            </div>
+              </div>
+            ) : (
+              <div className="relative aspect-video bg-black overflow-hidden border border-zinc-900">
+                <video
+                  ref={videoRef}
+                  className="w-full h-full object-cover scale-x-[-1]"
+                  autoPlay
+                  playsInline
+                  muted
+                />
+                <canvas
+                  ref={canvasRef}
+                  className="absolute top-0 left-0 w-full h-full scale-x-[-1] pointer-events-none"
+                />
 
-            {/* Quick interactive user tutorials tips inside mini radar dock */}
-            <div className="text-[8px] font-mono text-zinc-500 leading-normal px-2 bg-black/40 py-1.5 border border-zinc-900">
-              {scrollDirection === "COOLING_DOWN" ? (
-                <span className="text-amber-500 font-bold">🚫 COOLING DOWN // SWIPE RESET COOLDOWN IN PROGRESS</span>
-              ) : scrollDirection.startsWith("SWIPE") ? (
-                <span className="text-[#FF3B30] font-bold">🎯 SWIPE DETECTED // EXECUTING FIXED INTERACTION SCROLL</span>
-              ) : handDetected ? (
-                <span className="text-zinc-400">⚡ SWIPE HAND UP RAPIDLY TO SCROLL DOWN, OR DOWN TO SCROLL UP.</span>
-              ) : (
-                <span>💡 ALIGN HAND IN FRONT OF WEB CAMERA TO TEST TOUCHLESS NAV.</span>
-              )}
-            </div>
+                {/* Micro-loading spinner mask overlay */}
+                {loadingText && (
+                  <div className="absolute inset-0 bg-black/90 flex flex-col items-center justify-center p-3 text-center space-y-1">
+                    <div className="w-4 h-4 border border-t-[#FF3B30] border-zinc-800 rounded-full animate-spin"></div>
+                    <span className="text-[8px] font-mono uppercase tracking-widest text-zinc-500">{loadingText}</span>
+                  </div>
+                )}
+
+                {/* Dynamic UI Debug indicator for easy timing optimization */}
+                {scrollDirection !== "STATIONARY" && (
+                  <div
+                    className={`absolute bottom-1.5 right-1.5 px-2 py-0.5 text-[8px] font-mono uppercase tracking-widest font-bold text-white shadow-md transition-all ${
+                      scrollDirection === "COOLING_DOWN"
+                        ? "bg-amber-600 animate-pulse border border-amber-400"
+                        : scrollDirection.startsWith("SWIPE")
+                        ? "bg-[#FF3B30] border border-[#ff6961]"
+                        : "bg-emerald-650"
+                    }`}
+                  >
+                    {scrollDirection === "COOLING_DOWN" && "COOLING DOWN..."}
+                    {scrollDirection === "SWIPE_DETECTED_DOWN" && "SWIPE DETECTED // DOWN"}
+                    {scrollDirection === "SWIPE_DETECTED_UP" && "SWIPE DETECTED // UP"}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {!cameraError && (
+              <div className="text-[8px] font-mono text-zinc-500 leading-normal px-2 bg-black/40 py-1.5 border border-zinc-900">
+                {scrollDirection === "COOLING_DOWN" ? (
+                  <span className="text-amber-500 font-bold">🚫 COOLING DOWN // SWIPE RESET COOLDOWN IN PROGRESS</span>
+                ) : scrollDirection.startsWith("SWIPE") ? (
+                  <span className="text-[#FF3B30] font-bold">🎯 SWIPE DETECTED // EXECUTING FIXED INTERACTION SCROLL</span>
+                ) : handDetected ? (
+                  <span className="text-zinc-400">⚡ SWIPE HAND UP RAPIDLY TO SCROLL DOWN, OR DOWN TO SCROLL UP.</span>
+                ) : (
+                  <span>💡 ALIGN HAND IN FRONT OF WEB CAMERA TO TEST TOUCHLESS NAV.</span>
+                )}
+              </div>
+            )}
           </div>
         )}
       </div>

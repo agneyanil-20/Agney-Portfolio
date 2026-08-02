@@ -67,7 +67,6 @@ html.light .bg-black:not(.keep-dark):not(.theme-toggle) {
 
 html.light .bg-zinc-950:not(.keep-dark):not(.theme-toggle),
 html.light .bg-zinc-900:not(.keep-dark):not(.theme-toggle),
-html.light .bg-black:not(.keep-dark):not(.theme-toggle),
 html.light [class*="bg-[#0"]:not(.keep-dark):not(.theme-toggle) {
   background-color: #ffffff !important; /* Crisp components */
 }
@@ -82,16 +81,16 @@ html.light .bg-zinc-950\/50:not(.keep-dark),
 html.light .bg-zinc-950\/40:not(.keep-dark),
 html.light .bg-zinc-950\/20:not(.keep-dark),
 html.light .bg-zinc-900\/50:not(.keep-dark) {
-  background-color: rgba(228, 228, 231, 0.8) !important;
+  background-color: #ffffff !important;
 }
 
-html.light .text-white:not(.keep-dark):not(.theme-toggle):not(.inline-flex),
-html.light .text-white:not(.keep-dark) span {
+html.light .text-white:not(.keep-dark):not(.theme-toggle):not(.bg-\[\#FF3B30\]),
+html.light .text-white:not(.keep-dark) span:not(.text-black):not(.text-\[\#FF3B30\]) {
   color: #09090b !important;
 }
 
 html.light .text-zinc-300:not(.keep-dark) {
-  color: #121212 !important; /* Deep charcoal slate */
+  color: #18181b !important; /* Deep charcoal slate */
 }
 
 html.light .text-zinc-400:not(.keep-dark) {
@@ -115,11 +114,15 @@ html.light .border-zinc-950,
 html.light .border-zinc-900,
 html.light .border-zinc-900\/60,
 html.light .border-zinc-900\/50 {
-  border-color: #e4e4e7 !important;
+  border-color: #d4d4d8 !important;
 }
 
 html.light .border-zinc-800 {
-  border-color: #d4d4d8 !important; /* Visual separation lines */
+  border-color: #a1a1aa !important; /* Visual separation lines */
+}
+
+html.light .border-dashed {
+  border-color: #a1a1aa !important;
 }
 
 html.light .border-white\/40 {
@@ -148,42 +151,49 @@ html.light .theme-toggle {
 .keep-dark *,
 html.light .keep-dark *,
 .theme-toggle *,
-html.light .theme-toggle *,
-html.light button.inline-flex,
-html.light button.inline-flex *,
-html.light a.inline-flex,
-html.light a.inline-flex * {
+html.light .theme-toggle * {
   color: #ffffff !important;
 }
 
-/* High Contrast CTA Action Buttons & Links */
-html.light button.inline-flex,
-html.light a.inline-flex,
+/* Red buttons & badges preserve their vibrant red & black text */
+html.light .bg-\[\#FF3B30\] {
+  background-color: #FF3B30 !important;
+  border-color: #FF3B30 !important;
+}
+
+html.light .bg-\[\#FF3B30\] *,
+html.light .text-black {
+  color: #000000 !important;
+}
+
+/* High Contrast CTA Action Buttons & Links (excluding red buttons) */
+html.light button.inline-flex:not(.bg-\[\#FF3B30\]),
+html.light a.inline-flex:not(.bg-\[\#FF3B30\]),
 html.light .bg-zinc-950.text-white,
 html.light .bg-zinc-950.hover\:bg-black {
   background-color: #121212 !important; /* Premium solid brutalist black button */
+  color: #ffffff !important;
   border-color: #121212 !important;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
 }
 
-html.light button.inline-flex:hover, 
-html.light a.inline-flex:hover,
-html.light .bg-zinc-950.text-white:hover,
-html.light .bg-zinc-950.hover\:bg-black:hover,
-html.light button.inline-flex:hover *, 
-html.light a.inline-flex:hover *,
-html.light .bg-zinc-950.text-white:hover *,
-html.light .bg-zinc-950.hover\:bg-black:hover * {
+html.light button.inline-flex:not(.bg-\[\#FF3B30\]) *,
+html.light a.inline-flex:not(.bg-\[\#FF3B30\]) * {
   color: #ffffff !important;
 }
 
-html.light button.inline-flex:hover, 
-html.light a.inline-flex:hover,
+html.light button.inline-flex:not(.bg-\[\#FF3B30\]):hover, 
+html.light a.inline-flex:not(.bg-\[\#FF3B30\]):hover,
 html.light .bg-zinc-950.text-white:hover,
 html.light .bg-zinc-950.hover\:bg-black:hover {
   background-color: #FF3B30 !important; /* Vibrant Red Highlight on hover */
   border-color: #FF3B30 !important;
   box-shadow: 0 4px 18px rgba(255, 59, 48, 0.25);
+}
+
+html.light button.inline-flex:not(.bg-\[\#FF3B30\]):hover *, 
+html.light a.inline-flex:not(.bg-\[\#FF3B30\]):hover * {
+  color: #ffffff !important;
 }
 
 /* Round Slider Controllers & Lightbox Modal Close button */
