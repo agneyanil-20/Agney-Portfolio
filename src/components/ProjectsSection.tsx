@@ -90,30 +90,13 @@ export default function ProjectsSection() {
                       ({formattedNum})
                     </span>
 
-                    {project.projectUrl ? (
-                      <a
-                        href={project.projectUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={() => setActiveProjectId(project.id)}
-                        className={`font-sans text-xl md:text-2xl tracking-tight transition-colors duration-200 no-underline outline-none focus:outline-none ${
-                          isActive 
-                            ? "text-white font-semibold" 
-                            : "text-zinc-500 font-normal hover:text-white group-hover:text-zinc-300"
-                        }`}
-                        data-cursor="interactive"
-                      >
-                        {project.title}
-                      </a>
-                    ) : (
-                      <span className={`font-sans text-xl md:text-2xl tracking-tight transition-colors duration-200 ${
-                        isActive 
-                          ? "text-white font-semibold" 
-                          : "text-zinc-500 font-normal group-hover:text-zinc-300"
-                      }`}>
-                        {project.title}
-                      </span>
-                    )}
+                    <span className={`font-sans text-xl md:text-2xl tracking-tight transition-colors duration-200 ${
+                      isActive 
+                        ? "text-white font-semibold" 
+                        : "text-zinc-500 font-normal group-hover:text-zinc-300"
+                    }`}>
+                      {project.title}
+                    </span>
                   </div>
 
                   {/* Subtle year metadata on hover/active */}

@@ -54,8 +54,8 @@ export default function App() {
     const sectionTitles: Record<string, string> = {
       hero: "Home",
       about: "About",
-      projects: "Work",
       career: "Career",
+      projects: "Work",
       photography: "Photography"
     };
 
@@ -102,13 +102,13 @@ export default function App() {
         {/* Section 1: about -> triggers scrolling from "I" */}
         <AboutSection />
 
-        {/* Section 2: projects -> triggers scrolling from "Work" */}
-        <ProjectsSection />
-
-        {/* Section: career -> Career Pathway */}
+        {/* Section 2: career -> Career Pathway */}
         <CareerSection />
 
-        {/* Section 3: photography -> triggers scrolling from "Photography" */}
+        {/* Section 3: projects -> Works */}
+        <ProjectsSection />
+
+        {/* Section 4: photography -> triggers scrolling from "Photography" */}
         <PhotographySection />
       </main>
 
