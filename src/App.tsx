@@ -8,6 +8,7 @@ import { Instagram, MessageSquare, Globe } from "lucide-react";
 import HeroSection from "./components/HeroSection";
 import AboutSection from "./components/AboutSection";
 import ProjectsSection from "./components/ProjectsSection";
+import CareerSection from "./components/CareerSection";
 import PhotographySection from "./components/PhotographySection";
 import CustomCursor from "./components/CustomCursor";
 import NoiseBackground from "./components/NoiseBackground";
@@ -54,6 +55,7 @@ export default function App() {
       hero: "Home",
       about: "About",
       projects: "Work",
+      career: "Career",
       photography: "Photography"
     };
 
@@ -102,6 +104,9 @@ export default function App() {
 
         {/* Section 2: projects -> triggers scrolling from "Work" */}
         <ProjectsSection />
+
+        {/* Section: career -> Career Pathway */}
+        <CareerSection />
 
         {/* Section 3: photography -> triggers scrolling from "Photography" */}
         <PhotographySection />

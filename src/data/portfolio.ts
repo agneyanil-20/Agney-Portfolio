@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Project, Photo } from "../types";
+import { Project, Photo, CareerPosition } from "../types";
 
 export const PORTFOLIO_DATA = {
   about: {
@@ -44,52 +44,6 @@ export const PORTFOLIO_DATA = {
       development: ["Google AI Studio", "Claude / Antigravity", "Lovable", "Supabase", "Vercel", "Cloudinary"],
       leadership: ["Creative Direction", "Team Leadership", "Client Communication", "Project Planning"]
     },
-    timeline: [
-      { 
-        year: "2025 — Present", 
-        role: "Creative Lead & UI/UX Designer", 
-        company: "Cntrl M",
-        details: [
-          "Leading a multidisciplinary creative team of designers and content creators.",
-          "Managing design systems, website projects, client branding, and product experiences.",
-          "Designing websites, dashboards, AI tools, and internal systems.",
-          "Introducing AI-assisted workflows using Google AI Studio, Claude, and other modern tools.",
-          "Collaborating directly with clients to transform business requirements into digital experiences.",
-          "Ensuring quality, consistency, and timely delivery across multiple client accounts."
-        ]
-      },
-      { 
-        year: "2024 — 2025", 
-        role: "Graphic Designer", 
-        company: "NBT",
-        details: [
-          "Created digital campaigns, branding assets, and social media content for multiple brands.",
-          "Worked closely with marketing teams to develop performance-driven creative solutions.",
-          "Developed visual identities, promotional materials, and campaign concepts.",
-          "Built strong foundations in branding, typography, layout design, and creative problem-solving."
-        ]
-      },
-      {
-        year: "2023 — 2024",
-        role: "Freelance UI Designer & Branding Specialist",
-        company: "Independent",
-        details: [
-          "Delivered bespoke digital solutions for startups and local businesses.",
-          "Specialized in minimalist web design and cohesive visual identity systems.",
-          "Managed end-to-end creative processes from discovery to final delivery."
-        ]
-      },
-      {
-        year: "2022 — 2023",
-        role: "Creative Intern",
-        company: "Pixel Perfect Studio",
-        details: [
-          "Assisted in the creation of visual content for social media and web platforms.",
-          "Gained hands-on experience with industry-standard design tools and workflows.",
-          "Contributed to brainstorming sessions for client branding projects."
-        ]
-      }
-    ],
     highlights: [
       "Leading creative direction and UI/UX design for multiple brands across education, SaaS, retail, and service industries.",
       "Designed and launched production-ready websites, dashboards, and digital experiences.",
@@ -445,12 +399,29 @@ NEELI evolved from a simple ghost exploration concept into a location-based folk
       buttonText: "View Case Study"
     },
     {
+      id: "speeki-ai",
+      title: "Speeki AI",
+      category: "Voice & Conversational AI Experience",
+      year: "2026",
+      tagline: "An AI-powered conversational voice companion and interactive language practice interface.",
+      description: "An intuitive conversational voice interface engineered for real-time speech interaction, low-latency audio processing, and fluid feedback loops.",
+      imageUrl: "https://res.cloudinary.com/demmybfne/image/upload/v1782136236/Untitlesdfsdfd_design_asb5cz.jpg",
+      details: [
+        "Real-time voice interface and interactive audio feedback",
+        "Minimalist conversational flow and speech visualizer",
+        "Optimized latency for natural dialogue experience"
+      ],
+      technologies: ["React", "Web Audio API", "AI Integration", "Tailwind CSS"],
+      projectUrl: "https://speeki.vercel.app",
+      buttonText: "See Website"
+    },
+    {
       id: "cntrl-m",
       title: "Cntrl M",
       category: "Digital Agency & Design System",
       year: "2025",
       tagline: "Creative direction, website design, and scalable design system.",
-      description: "Comprehensive product design and brand platform for creative production.",
+      description: "Comprehensive product design and brand platform created for creative team management, client deliverables, and rapid agency execution.",
       imageUrl: "https://res.cloudinary.com/demmybfne/image/upload/v1782229383/WhatsApp_Image_2026-06-23_at_9.09.38_PM_kmgjnv.jpg",
       details: ["Creative direction & web architecture", "Scalable client design system"],
       technologies: ["Creative Direction", "UI/UX Design", "Design Systems"],
@@ -463,12 +434,17 @@ NEELI evolved from a simple ghost exploration concept into a location-based folk
       category: "Creative Audio Exploration Platform",
       year: "2026",
       tagline: "An experimental digital sketchbook for audio experiences.",
-      description: "A creative canvas where audio APIs and design converge.",
+      description: "A browser-based music player and experimental audio platform designed with a clean, sketchbook-inspired interface.",
       imageUrl: "https://res.cloudinary.com/demmybfne/image/upload/v1782136970/Sound_Sketchbook_wqxlty.jpg",
       details: ["Interactive audio-first user experience"],
       technologies: ["React", "Next.js", "Audio APIs"],
       projectUrl: "https://sound-sketchbook.vercel.app",
-      buttonText: "See Website"
+      buttonText: "See Website",
+      fullWriteup: `# Sound Sketchbook
+
+## Overview
+
+Sound Sketchbook is a browser-based music player that reimagines the traditional streaming experience. Instead of following the familiar Spotify or Apple Music design language, the goal was to create an interface that felt like a designer's sketchbook—minimal, expressive, and distraction-free.`
     },
     {
       id: "photobooth",
@@ -476,7 +452,7 @@ NEELI evolved from a simple ghost exploration concept into a location-based folk
       category: "Interactive Event Photography Experience",
       year: "2025",
       tagline: "A modern digital photobooth designed for instant capture and sharing.",
-      description: "Mobile-first instant photo processing workflow.",
+      description: "A modern digital photobooth application designed to create memorable event experiences through instant capture, sharing, and interactive engagement.",
       imageUrl: "https://res.cloudinary.com/demmybfne/image/upload/v1782136614/photobooth1_wuqtdt.jpg",
       details: ["Fast image capture and processing workflow"],
       technologies: ["React", "Next.js", "Tailwind CSS"],
@@ -489,12 +465,17 @@ NEELI evolved from a simple ghost exploration concept into a location-based folk
       category: "Experimental Storytelling Platform",
       year: "2026",
       tagline: "A digital storytelling experience exploring folklore through AI.",
-      description: "Blurring fiction and technology with generative narrative flows.",
+      description: "A location-based paranormal folklore platform that transforms regional myths and urban legends into an immersive digital storytelling experience.",
       imageUrl: "https://res.cloudinary.com/demmybfne/image/upload/v1782136236/Untitlesdfsdfd_design_asb5cz.jpg",
       details: ["AI-powered narrative generation"],
       technologies: ["React", "Next.js", "AI Integration"],
       projectUrl: "https://neeli.vercel.app",
-      buttonText: "See Website"
+      buttonText: "See Website",
+      fullWriteup: `# NEELI
+
+## Overview
+
+NEELI is a location-based paranormal folklore exploration platform that transforms regional ghost stories and urban legends into an immersive digital experience.`
     }
   ] as Project[],
   photography: [
@@ -597,5 +578,59 @@ NEELI evolved from a simple ghost exploration concept into a location-based folk
       projectUrl: "https://www.behance.net/agneyanil",
       buttonText: "View Project"
     }
-  ] as Project[]
+  ] as Project[],
+  careerPathway: [
+    {
+      id: "creative-lead",
+      number: "01",
+      title: "Creative Lead & UI/UX Designer",
+      company: "Cntrl M",
+      period: "2025 — Present",
+      description: [
+        "Leading a multidisciplinary creative team of designers and content creators.",
+        "Managing design systems, website projects, client branding, and product experiences.",
+        "Designing websites, dashboards, AI tools, and internal systems.",
+        "Introducing AI-assisted workflows using Google AI Studio, Claude, and other modern tools.",
+        "Collaborating directly with clients to transform business requirements into digital experiences.",
+        "Ensuring quality, consistency, and timely delivery across multiple client accounts."
+      ]
+    },
+    {
+      id: "graphic-designer",
+      number: "02",
+      title: "Graphic Designer",
+      company: "NBT",
+      period: "2024 — 2025",
+      description: [
+        "Created digital campaigns, branding assets, and social media content for multiple brands.",
+        "Worked closely with marketing teams to develop performance-driven creative solutions.",
+        "Developed visual identities, promotional materials, and campaign concepts.",
+        "Built strong foundations in branding, typography, layout design, and creative problem-solving."
+      ]
+    },
+    {
+      id: "freelance-ui-designer",
+      number: "03",
+      title: "Freelance UI Designer & Branding Specialist",
+      company: "Independent",
+      period: "2023 — 2024",
+      description: [
+        "Delivered bespoke digital solutions for startups and local businesses.",
+        "Specialized in minimalist web design and cohesive visual identity systems.",
+        "Managed end-to-end creative processes from discovery to final delivery."
+      ]
+    },
+    {
+      id: "creative-intern",
+      number: "04",
+      title: "Creative Intern",
+      company: "Pixel Perfect Studio",
+      period: "2022 — 2023",
+      description: [
+        "Assisted in the creation of visual content for social media and web platforms.",
+        "Gained hands-on experience with industry-standard design tools and workflows.",
+        "Contributed to brainstorming sessions for client branding projects."
+      ]
+    }
+  ] as CareerPosition[]
 };

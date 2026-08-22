@@ -34,3 +34,12 @@ export interface Experiment {
   description: string;
   tech: string;
 }
+
+export interface CareerPosition {
+  id: string;
+  number: string;
+  title: string;
+  company: string;
+  period: string;
+  description: string[];
+}

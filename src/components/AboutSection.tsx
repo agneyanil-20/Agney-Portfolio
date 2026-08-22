@@ -3,31 +3,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useRef, RefObject, useState } from "react";
-import { motion, AnimatePresence } from "motion/react";
+import { motion } from "motion/react";
 import { PORTFOLIO_DATA } from "../data/portfolio";
-import { MapPin, Instagram, MessageSquare, BookOpen, ExternalLink, Globe, ArrowLeft, ArrowRight, Plus, Minus } from "lucide-react";
+import { MapPin, Instagram, MessageSquare, BookOpen, ExternalLink, Globe } from "lucide-react";
 
 export default function AboutSection() {
-  const { name, role, subRole, location, coordinates, bioShort, bioLong, philosophy, skills, timeline, socials } = PORTFOLIO_DATA.about;
-  const philosophyRef = useRef<HTMLDivElement>(null);
-  const competenciesRef = useRef<HTMLDivElement>(null);
-  const [isExpanded, setIsExpanded] = useState(false);
-
-  // Show only 2 items initially
-  const visibleTimeline = isExpanded ? timeline : timeline.slice(0, 2);
-
-  const scroll = (ref: RefObject<HTMLDivElement>, direction: "left" | "right") => {
-    if (ref.current) {
-      const { scrollLeft, clientWidth } = ref.current;
-      const scrollAmount = clientWidth * 0.5;
-      const targetScroll = direction === "left" ? scrollLeft - scrollAmount : scrollLeft + scrollAmount;
-      ref.current.scrollTo({
-        left: targetScroll,
-        behavior: "smooth",
-      });
-    }
-  };
+  const { name, role, subRole, location, coordinates, bioShort, bioLong, philosophy, socials } = PORTFOLIO_DATA.about;
 
   // Calculate estimated reading time based on 200 WPM
   const editorialText = [
@@ -179,7 +160,7 @@ export default function AboutSection() {
           <div className="lg:col-span-7 flex flex-col gap-12">
             
             {/* Biography Paragraphs */}
-            <div className="flex flex-col gap-5 text-zinc-300 text-md md:text-lg lg:text-xl font-light leading-relaxed tracking-wide pb-6 border-b border-zinc-900">
+            <div className="flex flex-col gap-5 text-zinc-300 text-md md:text-lg lg:text-xl font-light leading-relaxed tracking-wide">
               {bioLong.map((para, i) => (
                 <motion.p 
                   key={i} 
@@ -191,95 +172,6 @@ export default function AboutSection() {
                   {para}
                 </motion.p>
               ))}
-            </div>
-
-            {/* Professional Timeline */}
-            <div className="flex flex-col gap-6 pt-4">
-              <div className="flex items-center gap-4 mb-2">
-                <h3 className="font-mono text-zinc-500 text-[10px] tracking-[0.3em] uppercase">
-                  // CAREER PATHWAY
-                </h3>
-                <div className="h-[1px] flex-grow bg-zinc-900" />
-              </div>
-              
-              <div className="relative pl-8">
-                {/* Vertical Timeline Line */}
-                <div className="absolute left-[3px] top-2 bottom-0 w-[1px] bg-zinc-900" />
-                
-                <div className="flex flex-col gap-12">
-                  <AnimatePresence mode="popLayout">
-                    {visibleTimeline.map((item, index) => (
-                      <motion.div 
-                        key={`${item.company}-${item.role}-${index}`}
-                        className="relative group"
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: 10 }}
-                        transition={{ duration: 0.5, delay: isExpanded ? 0 : index * 0.1 }}
-                      >
-                        {/* Timeline Marker */}
-                        <div className="absolute -left-[32px] top-1.5 flex items-center justify-center">
-                          <div className={`w-1.5 h-1.5 rounded-full transition-all duration-500 ${index === 0 ? 'bg-[#FF3B30] ring-4 ring-[#FF3B30]/20' : 'bg-zinc-800 group-hover:bg-zinc-600'}`} />
-                        </div>
-
-                        <div className="flex flex-col gap-4">
-                          <div className="flex flex-col md:flex-row md:items-baseline justify-between gap-2">
-                            <div className="flex flex-col gap-1">
-                              <h4 className="font-display text-lg md:text-xl font-black text-white tracking-tight leading-none">
-                                {item.role}
-                              </h4>
-                              <div className="flex items-center gap-2">
-                                <span className="font-mono text-[10px] text-zinc-500 uppercase tracking-widest font-medium">
-                                  {item.company}
-                                </span>
-                                {index === 0 && (
-                                  <span className="px-1.5 py-0.5 bg-zinc-900 border border-zinc-800 text-[#FF3B30] text-[8px] font-mono tracking-tighter uppercase font-bold">
-                                    ACTIVE
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                            <span className="font-mono text-[11px] text-zinc-400 bg-zinc-950 px-2 py-1 border border-zinc-900 tabular-nums">
-                              {item.year}
-                            </span>
-                          </div>
-
-                          {item.details && (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-3">
-                              {item.details.map((detail, idx) => (
-                                <div key={idx} className="flex gap-3 items-start group/detail">
-                                  <span className="w-1 h-[1px] bg-zinc-700 mt-2.5 transition-all duration-300 group-hover/detail:w-3 group-hover/detail:bg-[#FF3B30] flex-shrink-0" />
-                                  <p className="text-zinc-500 text-xs md:text-sm font-light leading-relaxed tracking-wide group-hover/detail:text-zinc-300 transition-colors">
-                                    {detail}
-                                  </p>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      </motion.div>
-                    ))}
-                  </AnimatePresence>
-                </div>
-
-                {timeline.length > 2 && (
-                  <motion.button
-                    onClick={() => setIsExpanded(!isExpanded)}
-                    className="mt-12 flex items-center gap-4 px-8 py-4 bg-zinc-950 border border-zinc-900 hover:border-[#FF3B30] transition-all duration-500 group font-mono text-[11px] tracking-[0.2em] uppercase font-bold text-zinc-400 hover:text-white"
-                    whileHover={{ x: 5 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    <div className="p-1 rounded-full bg-zinc-900 group-hover:bg-[#FF3B30] transition-colors">
-                      {isExpanded ? (
-                        <Minus className="w-3 h-3 text-white" />
-                      ) : (
-                        <Plus className="w-3 h-3 text-white" />
-                      )}
-                    </div>
-                    <span>{isExpanded ? "Collapse History" : "Load Full Experience"}</span>
-                  </motion.button>
-                )}
-              </div>
             </div>
 
           </div>
