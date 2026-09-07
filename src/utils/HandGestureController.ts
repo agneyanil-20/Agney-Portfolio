@@ -25,6 +25,15 @@ export interface Landmark {
   z?: number;
 }
 
+/**
+ * Normalizes an angle difference to the range [-PI, PI] to prevent wrapping jumps.
+ */
+export function normalizeAngleDelta(delta: number): number {
+  while (delta > Math.PI) delta -= Math.PI * 2;
+  while (delta < -Math.PI) delta += Math.PI * 2;
+  return delta;
+}
+
 export class HandGestureController {
   // Current gesture state
   public currentMode: GestureMode = "idle";
@@ -55,11 +64,13 @@ export class HandGestureController {
   private releaseFrames: number = 0;
   private hasClickedThisPinch: boolean = false;
 
-  // Scroll parameters
-  private readonly SCROLL_DEADZONE_PX = 1.8;
-  private readonly SCROLL_MULTIPLIER = 2.5;
-  private prevPalmY: number | null = null;
-  private smoothScrollDelta: number = 0;
+  // Rotation scroll parameters
+  private previousAngle: number | null = null;
+  private smoothAngle: number | null = null;
+  private rotationAccumulator: number = 0;
+  private readonly ROTATION_DEADZONE_RAD = 0.015; // ~0.85 degrees deadzone for micro-tremors
+  private readonly ROTATION_TRIGGER_RAD = 0.035; // ~2 degrees of rotation per scroll notch
+  private readonly ROTATION_SCROLL_STEP_PX = 28; // Pixels to scroll per trigger step
 
   // State machine debounce
   private pendingMode: GestureMode | null = null;
@@ -98,13 +109,7 @@ export class HandGestureController {
 
   /**
    * Detects the number of extended fingers and finger states using landmark geometry.
-   * Landmarks:
-   * Wrist = 0
-   * Thumb = 1..4
-   * Index = 5..8
-   * Middle = 9..12
-   * Ring = 13..16
-   * Pinky = 17..20
+   * Wrist = 0, Thumb = 1..4, Index = 5..8, Middle = 9..12, Ring = 13..16, Pinky = 17..20
    */
   public detectFingerStates(landmarks: Landmark[]): {
     count: number;
@@ -323,37 +328,93 @@ export class HandGestureController {
   }
 
   /**
-   * Smoothly scrolls the window when 3+ fingers are held open.
-   * Uses palm center Y to ensure stability.
+   * Calculates a stable 2D hand orientation angle in mirrored screen space.
+   * Uses both the index finger vector (5 -> 8) and palm axis (0 -> 9) for high stability.
    */
-  public updateScroll(landmarks: Landmark[]) {
+  public calculateHandOrientationAngle(landmarks: Landmark[]): number {
+    // In mirrored screen coordinates:
+    // screenX = 1 - landmark.x
+    // screenY = landmark.y
+    const indexMcp = landmarks[5];
+    const indexTip = landmarks[8];
+    const wrist = landmarks[0];
+    const middleMcp = landmarks[9];
+
+    // Vector 1: Index MCP to Index Tip (mirrored screen space)
+    const dxIndex = (1 - indexTip.x) - (1 - indexMcp.x);
+    const dyIndex = indexTip.y - indexMcp.y;
+
+    // Vector 2: Wrist to Middle MCP (solid palm axis, mirrored screen space)
+    const dxPalm = (1 - middleMcp.x) - (1 - wrist.x);
+    const dyPalm = middleMcp.y - wrist.y;
+
+    // Combine both vectors to suppress single-finger twitch while retaining instant rotation responsiveness
+    const combinedDx = dxIndex + dxPalm;
+    const combinedDy = dyIndex + dyPalm;
+
+    return Math.atan2(combinedDy, combinedDx);
+  }
+
+  /**
+   * ROTATION SCROLL MODE:
+   * When 3+ fingers are extended, scrolling is driven purely by hand rotation:
+   * ↻ CLOCKWISE rotation -> page scrolls DOWN (positive scrollBy top)
+   * ↺ ANTI-CLOCKWISE rotation -> page scrolls UP (negative scrollBy top)
+   */
+  public updateRotationScroll(landmarks: Landmark[]) {
     if (typeof window === "undefined") return;
 
-    // Palm center: midpoint of Wrist (0) and Middle MCP (9)
-    const palmY = (landmarks[0].y + landmarks[9].y) / 2;
-    const currentPixelPalmY = palmY * window.innerHeight;
+    const currentAngle = this.calculateHandOrientationAngle(landmarks);
 
-    if (this.prevPalmY === null) {
-      this.prevPalmY = currentPixelPalmY;
-      this.smoothScrollDelta = 0;
+    // Initialize baseline angle on first frame of scroll mode
+    if (this.previousAngle === null || this.smoothAngle === null) {
+      this.previousAngle = currentAngle;
+      this.smoothAngle = currentAngle;
+      this.rotationAccumulator = 0;
       return;
     }
 
-    const deltaY = currentPixelPalmY - this.prevPalmY;
-    this.prevPalmY = currentPixelPalmY;
+    // 1. Exponential smoothing to eliminate high-frequency landmark noise
+    const rawDelta = normalizeAngleDelta(currentAngle - this.smoothAngle);
+    this.smoothAngle += rawDelta * 0.32;
 
-    // Exponential smoothing
-    this.smoothScrollDelta = this.smoothScrollDelta * 0.35 + deltaY * 0.65;
+    // 2. Compute rotation delta between current smoothed angle and previous reference
+    const rotationDelta = normalizeAngleDelta(this.smoothAngle - this.previousAngle);
+    this.previousAngle = this.smoothAngle;
 
-    // Deadzone and scrolling
-    if (Math.abs(this.smoothScrollDelta) > this.SCROLL_DEADZONE_PX) {
-      const scrollAmount = this.smoothScrollDelta * this.SCROLL_MULTIPLIER;
+    // 3. Deadzone filter: ignore micro-tremors while hand is held stationary
+    if (Math.abs(rotationDelta) < this.ROTATION_DEADZONE_RAD) {
+      return;
+    }
+
+    // 4. Accumulate rotation
+    this.rotationAccumulator += rotationDelta;
+
+    // 5. Trigger smooth scrolling steps once accumulated threshold is reached
+    // CLOCKWISE rotation produces positive delta -> scrolls DOWN
+    // ANTI-CLOCKWISE rotation produces negative delta -> scrolls UP
+    if (Math.abs(this.rotationAccumulator) >= this.ROTATION_TRIGGER_RAD) {
+      const steps = Math.trunc(this.rotationAccumulator / this.ROTATION_TRIGGER_RAD);
+      const scrollAmount = steps * this.ROTATION_SCROLL_STEP_PX;
+
       window.scrollBy({
         top: scrollAmount,
         left: 0,
         behavior: "auto",
       });
+
+      // Retain the remainder to preserve fluid continuous rotation
+      this.rotationAccumulator -= steps * this.ROTATION_TRIGGER_RAD;
     }
+  }
+
+  /**
+   * Resets all rotation tracking state variables when entering or exiting scroll mode.
+   */
+  private resetRotationState() {
+    this.previousAngle = null;
+    this.smoothAngle = null;
+    this.rotationAccumulator = 0;
   }
 
   /**
@@ -392,7 +453,7 @@ export class HandGestureController {
     }
 
     // 3. Determine candidate mode based on STRICT PRIORITY:
-    // Priority 1: 3+ fingers -> SCROLL MODE
+    // Priority 1: 3+ fingers -> ROTATION SCROLL MODE
     // Priority 2: Pinch -> CLICK MODE
     // Priority 3: Index finger pointing -> POINTER MODE
     // Priority 4: Otherwise -> IDLE MODE
@@ -413,13 +474,14 @@ export class HandGestureController {
 
     // 5. Execute action based on active mode
     if (this.currentMode === "scroll") {
-      this.updateScroll(landmarks);
+      // Rotation-only scrolling: does not update cursor or click
+      this.updateRotationScroll(landmarks);
     } else {
-      this.prevPalmY = null;
-      this.smoothScrollDelta = 0;
+      // Reset rotation states immediately when not in scroll mode
+      this.resetRotationState();
     }
 
-    // Pointer and Pinch update cursor coordinates
+    // Pointer and Pinch update virtual cursor coordinates
     if (this.currentMode === "pointer" || this.currentMode === "pinch") {
       this.updateCursor(landmarks[8]);
     }
@@ -443,7 +505,7 @@ export class HandGestureController {
         cursor: { x: Math.round(this.cursorX), y: Math.round(this.cursorY) },
         pinchState: this.isPinching ? "ACTIVE" : "OPEN",
         pinchRatio: Number(this.pinchRatio.toFixed(2)),
-        scrollDelta: Math.round(this.smoothScrollDelta),
+        scrollDelta: Math.round(this.rotationAccumulator * 100),
       });
     }
   }
@@ -463,6 +525,10 @@ export class HandGestureController {
       const requiredFrames = candidateMode === "pinch" ? 1 : 2;
 
       if (this.pendingFrames >= requiredFrames) {
+        // If transitioning into or out of scroll mode, reset rotation state
+        if (this.currentMode === "scroll" || candidateMode === "scroll") {
+          this.resetRotationState();
+        }
         this.currentMode = candidateMode;
         this.pendingMode = null;
         this.pendingFrames = 0;
@@ -481,8 +547,7 @@ export class HandGestureController {
     this.currentMode = "idle";
     this.pendingMode = null;
     this.pendingFrames = 0;
-    this.prevPalmY = null;
-    this.smoothScrollDelta = 0;
+    this.resetRotationState();
     this.isPinching = false;
     this.hasClickedThisPinch = false;
     this.pinchFrames = 0;
@@ -529,6 +594,7 @@ export class HandGestureController {
     this.cursorElement.style.opacity = "1";
 
     if (this.currentMode === "scroll") {
+      // Subtle stationary amber ring during rotation scroll mode (no cursor trail, no box)
       this.cursorElement.style.transform = `translate3d(${this.cursorX}px, ${this.cursorY}px, 0) scale(0.9)`;
       this.cursorElement.setAttribute("data-mode", "scroll");
     } else if (this.currentMode === "pinch") {

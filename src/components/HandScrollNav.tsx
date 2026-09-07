@@ -552,10 +552,10 @@ export default function HandScrollNav({ theme, setTheme }: HandScrollNavProps) {
                 <span className="text-lg">🖐️</span>
                 <div className="flex flex-col">
                   <h4 className="font-mono text-[10px] uppercase font-bold text-zinc-200">
-                    3+ Fingers: Scroll Page
+                    3+ Fingers: Rotation Scroll
                   </h4>
                   <p className="text-zinc-400 text-xs mt-0.5 leading-relaxed">
-                    Show 3 or more open fingers. Moving your hand up or down smoothly scrolls the page.
+                    Show 3 or more open fingers and rotate your hand like turning a dial. Rotate <strong>CLOCKWISE</strong> to scroll DOWN, or <strong>ANTI-CLOCKWISE</strong> to scroll UP.
                   </p>
                 </div>
               </div>
