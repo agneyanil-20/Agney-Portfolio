@@ -3,30 +3,35 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, useEffect, useRef } from "react";
-import { HandLandmarker, FilesetResolver } from "@mediapipe/tasks-vision";
-import { HandGestureController, GestureDebugInfo } from "../utils/HandGestureController";
+import { useState, useRef, useEffect } from "react";
+import { FilesetResolver, HandLandmarker } from "@mediapipe/tasks-vision";
+import {
+  HandGestureController,
+  DEBUG_HAND_TRACKING,
+  type GestureDebugInfo,
+} from "../utils/HandGestureController";
+import { X, RefreshCw } from "lucide-react";
 
-// Beautiful custom pixel art icons matching the Moon & Sun toggle
+// Pixel art icons for hand motion gesture toggle and theme switches
 const HAND_PIXELS = [
-  0, 1, 0, 1, 0, 1, 0, 0,
-  0, 1, 0, 1, 0, 1, 0, 0,
-  1, 1, 1, 1, 1, 1, 0, 0,
-  1, 1, 1, 1, 1, 1, 0, 0,
-  0, 1, 1, 1, 1, 1, 0, 0,
-  0, 1, 1, 1, 1, 0, 0, 0,
-  0, 0, 1, 1, 1, 0, 0, 0,
-  0, 0, 1, 1, 1, 0, 0, 0
+  0, 0, 1, 1, 0, 0, 0, 0,
+  0, 1, 0, 0, 1, 0, 0, 0,
+  0, 1, 0, 0, 1, 0, 0, 0,
+  0, 0, 1, 1, 0, 1, 1, 0,
+  0, 1, 0, 0, 1, 0, 0, 1,
+  1, 0, 0, 0, 0, 0, 0, 1,
+  1, 0, 0, 0, 0, 0, 0, 1,
+  0, 1, 1, 1, 1, 1, 1, 0
 ];
 
 const SUN_PIXELS = [
   0, 0, 1, 0, 0, 1, 0, 0,
-  0, 1, 0, 1, 1, 0, 1, 0,
+  0, 0, 0, 1, 1, 0, 0, 0,
   1, 0, 1, 1, 1, 1, 0, 1,
   0, 1, 1, 1, 1, 1, 1, 0,
   0, 1, 1, 1, 1, 1, 1, 0,
   1, 0, 1, 1, 1, 1, 0, 1,
-  0, 1, 0, 1, 1, 0, 1, 0,
+  0, 0, 0, 1, 1, 0, 0, 0,
   0, 0, 1, 0, 0, 1, 0, 0
 ];
 
@@ -48,22 +53,21 @@ interface HandScrollNavProps {
 
 export default function HandScrollNav({ theme, setTheme }: HandScrollNavProps) {
   const [isActive, setIsActive] = useState(false);
-  const [isMinimized, setIsMinimized] = useState(false);
   const [isGuideOpen, setIsGuideOpen] = useState(false);
-  const [showDebugPanel, setShowDebugPanel] = useState(true);
-  const [statusText, setStatusText] = useState("Off");
   const [loadingText, setLoadingText] = useState("");
   const [handDetected, setHandDetected] = useState(false);
-  const [fps, setFps] = useState(0);
   const [cameraError, setCameraError] = useState<string | null>(null);
 
-  // Real-time debug telemetry state
+  // Telemetry state (only utilized if DEBUG_HAND_TRACKING is true)
   const [debugInfo, setDebugInfo] = useState<GestureDebugInfo>({
     isActive: false,
     handDetected: false,
     gesture: "idle",
     fingerCount: 0,
-    cursor: { x: typeof window !== "undefined" ? window.innerWidth / 2 : 0, y: typeof window !== "undefined" ? window.innerHeight / 2 : 0 },
+    cursor: {
+      x: typeof window !== "undefined" ? window.innerWidth / 2 : 0,
+      y: typeof window !== "undefined" ? window.innerHeight / 2 : 0,
+    },
     pinchState: "OPEN",
     pinchRatio: 1.0,
     scrollDelta: 0,
@@ -79,13 +83,12 @@ export default function HandScrollNav({ theme, setTheme }: HandScrollNavProps) {
   // Gesture controller engine
   const gestureControllerRef = useRef<HandGestureController | null>(null);
 
-  const fpsFrameCountRef = useRef<number>(0);
-  const fpsLastTimeRef = useRef<number>(0);
-
   // Initialize gesture controller
   useEffect(() => {
     gestureControllerRef.current = new HandGestureController((info) => {
-      setDebugInfo(info);
+      if (DEBUG_HAND_TRACKING) {
+        setDebugInfo(info);
+      }
     });
 
     if (handCursorRef.current) {
@@ -132,15 +135,13 @@ export default function HandScrollNav({ theme, setTheme }: HandScrollNavProps) {
   const startTracking = async () => {
     try {
       setCameraError(null);
-      setStatusText("Initializing");
-      setLoadingText("Loading WASM module...");
+      setLoadingText("Starting sensor...");
 
       if (!landmarkerRef.current) {
         const vision = await FilesetResolver.forVisionTasks(
           "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.8/wasm"
         );
 
-        setLoadingText("Loading AI model...");
         landmarkerRef.current = await HandLandmarker.createFromOptions(vision, {
           baseOptions: {
             modelAssetPath:
@@ -149,13 +150,14 @@ export default function HandScrollNav({ theme, setTheme }: HandScrollNavProps) {
           },
           runningMode: "VIDEO",
           numHands: 1,
+          minHandDetectionConfidence: 0.65,
+          minHandPresenceConfidence: 0.65,
+          minTrackingConfidence: 0.65,
         });
       }
 
-      setLoadingText("Accessing camera...");
-
       if (!navigator?.mediaDevices?.getUserMedia) {
-        throw new Error("Webcam access is not supported or disabled in this browser context.");
+        throw new Error("Camera is unavailable or disabled in this browser.");
       }
 
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -169,8 +171,6 @@ export default function HandScrollNav({ theme, setTheme }: HandScrollNavProps) {
         videoRef.current.onloadedmetadata = () => {
           videoRef.current?.play();
           setLoadingText("");
-          setStatusText("Active");
-          fpsLastTimeRef.current = performance.now();
           animationFrameRef.current = requestAnimationFrame(predictFrameLoop);
         };
       }
@@ -185,12 +185,11 @@ export default function HandScrollNav({ theme, setTheme }: HandScrollNavProps) {
         errMsg.toLowerCase().includes("denied");
 
       const friendlyMsg = isPermissionDenied
-        ? "Camera permission denied. Please grant camera access in your browser or address bar settings to use touchless gesture navigation."
-        : errMsg || "Camera access failed or device is currently unavailable.";
+        ? "Camera access blocked. Please enable camera in browser settings."
+        : "Camera unavailable.";
 
-      console.warn("Hand sensor camera notice:", friendlyMsg);
+      console.warn("Touchless camera notice:", friendlyMsg);
       setCameraError(friendlyMsg);
-      setStatusText("Error");
       setLoadingText("");
 
       if (streamRef.current) {
@@ -216,12 +215,10 @@ export default function HandScrollNav({ theme, setTheme }: HandScrollNavProps) {
     if (videoRef.current) {
       videoRef.current.srcObject = null;
     }
-    setStatusText("Off");
     setHandDetected(false);
     setLoadingText("");
   };
 
-  // Switch state hand navigation trigger
   const handleToggle = () => {
     if (isActive || cameraError) {
       stopTracking();
@@ -251,11 +248,10 @@ export default function HandScrollNav({ theme, setTheme }: HandScrollNavProps) {
 
     if (!video || !landmarker || !video.srcObject) return;
 
-    if (video.readyState >= 3) {
+    if (video.readyState >= 2) {
       const timestamp = performance.now();
       const results = landmarker.detectForVideo(video, timestamp);
 
-      // Setup/resize canvas overlay
       if (canvas) {
         if (canvas.width !== video.videoWidth || canvas.height !== video.videoHeight) {
           canvas.width = video.videoWidth;
@@ -266,26 +262,14 @@ export default function HandScrollNav({ theme, setTheme }: HandScrollNavProps) {
         if (ctx) {
           ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-          // Calculate running estimation FPS
-          fpsFrameCountRef.current++;
-          if (timestamp >= fpsLastTimeRef.current + 1000) {
-            setFps(
-              Math.round(
-                (fpsFrameCountRef.current * 1000) / (timestamp - fpsLastTimeRef.current)
-              )
-            );
-            fpsFrameCountRef.current = 0;
-            fpsLastTimeRef.current = timestamp;
-          }
-
           if (results.landmarks && results.landmarks.length > 0) {
             setHandDetected(true);
             const landmarks = results.landmarks[0];
 
-            // Draw skeleton landmarks in red
+            // Render clean, minimal hand skeleton (thin lines, tiny dots)
             drawHandSkeleton(ctx, landmarks, canvas.width, canvas.height);
 
-            // Process touchless gestures through HandGestureController
+            // Process touchless gestures
             gestureControllerRef.current?.processLandmarks(landmarks);
           } else {
             setHandDetected(false);
@@ -298,19 +282,23 @@ export default function HandScrollNav({ theme, setTheme }: HandScrollNavProps) {
     animationFrameRef.current = requestAnimationFrame(predictFrameLoop);
   };
 
-  // Direct skeletal node mapping styling as a clean high-fidelity visualIZER overlay
-  const drawHandSkeleton = (ctx: CanvasRenderingContext2D, landmarks: any[], width: number, height: number) => {
-    ctx.strokeStyle = "rgba(255, 59, 48, 0.55)";
-    ctx.lineWidth = 2.5;
+  // Clean, minimal skeleton rendering (thin lines, tiny dots, no glow)
+  const drawHandSkeleton = (
+    ctx: CanvasRenderingContext2D,
+    landmarks: any[],
+    width: number,
+    height: number
+  ) => {
+    ctx.strokeStyle = "rgba(255, 59, 48, 0.45)";
+    ctx.lineWidth = 1.2;
 
-    // Palm / joint connections paths list
     const connections = [
       [0, 1], [1, 2], [2, 3], [3, 4],
       [0, 5], [5, 6], [6, 7], [7, 8],
       [5, 9], [9, 10], [10, 11], [11, 12],
       [9, 13], [13, 14], [14, 15], [15, 16],
       [13, 17], [17, 18], [18, 19], [19, 20],
-      [0, 17]
+      [0, 17],
     ];
 
     connections.forEach(([i1, i2]) => {
@@ -322,377 +310,260 @@ export default function HandScrollNav({ theme, setTheme }: HandScrollNavProps) {
       ctx.stroke();
     });
 
-    // Node circles decoration
-    landmarks.forEach(p => {
+    // Small subtle node dots (radius ~2px)
+    landmarks.forEach((p, idx) => {
       ctx.beginPath();
-      ctx.arc(p.x * width, p.y * height, 4.5, 0, 2 * Math.PI);
-      ctx.fillStyle = "#FF3B30";
+      const r = idx === 8 || idx === 4 ? 2.5 : 1.8;
+      ctx.arc(p.x * width, p.y * height, r, 0, 2 * Math.PI);
+      ctx.fillStyle = idx === 8 ? "#ffffff" : "#FF3B30";
       ctx.fill();
-      ctx.strokeStyle = "#FFFFFF";
-      ctx.lineWidth = 1;
-      ctx.stroke();
     });
   };
 
   return (
     <>
-      <div className="fixed top-6 right-6 md:top-8 md:right-12 z-50 flex flex-col items-end gap-2">
-        {/* Top Right Controls Group: Hand Motion Gesture & Theme Switch */}
-        <div className="flex items-center gap-2">
-          {/* Hand Motion Gesture Trigger (Icon Only) */}
+      {/* Top Right Controls Group: Theme Switch & Hand Gesture Switch */}
+      <div
+        className={`fixed top-6 z-50 flex items-center gap-2 transition-all duration-300 ${
+          isActive || cameraError
+            ? "right-[248px] sm:right-[268px] md:right-[280px]"
+            : "right-6 md:right-12"
+        }`}
+      >
+        {/* Hand Motion Gesture Trigger (Icon Only) */}
+        <button
+          onClick={handleToggle}
+          className={`group focus:outline-none p-1.5 border ${
+            isActive
+              ? "border-[#FF3B30] bg-[#140808] shadow-[0_0_10px_rgba(255,59,48,0.35)]"
+              : "border-zinc-800 hover:border-[#FF3B30] bg-[#0c0c0c]"
+          } shadow-lg rounded-none transition-all duration-300 cursor-pointer select-none keep-dark`}
+          title={isActive ? "Disable Hand Navigation" : "Enable Touchless Hand Navigation"}
+          data-cursor="interactive"
+        >
+          <div className="grid grid-cols-8 gap-[1px] w-[18px] h-[18px]">
+            {HAND_PIXELS.map((p, i) => (
+              <div
+                key={`hand-${i}`}
+                className={`w-full h-full ${
+                  p === 1
+                    ? isActive
+                      ? "bg-[#FF3B30]"
+                      : "bg-white group-hover:bg-[#FF3B30] transition-colors duration-300"
+                    : "bg-transparent"
+                }`}
+              />
+            ))}
+          </div>
+        </button>
+
+        {/* Theme Switcher Button */}
+        {setTheme && (
           <button
-            onClick={handleToggle}
-            className={`group focus:outline-none p-1.5 border ${
-              isActive
-                ? "border-[#FF3B30] bg-[#140808] shadow-[0_0_12px_rgba(255,59,48,0.35)]"
-                : "border-zinc-800 hover:border-[#FF3B30] bg-[#0c0c0c]"
-            } shadow-lg rounded-none transition-all duration-300 cursor-pointer select-none keep-dark`}
-            title={isActive ? "Disable Hand Gesture Control" : "Enable Touchless Hand Gesture Navigation"}
+            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            className="group focus:outline-none p-1.5 border border-zinc-800 hover:border-[#FF3B30] bg-[#0c0c0c] shadow-lg rounded-none transition-all duration-300 cursor-pointer select-none theme-toggle keep-dark"
+            title={`Switch to ${theme === "dark" ? "Light" : "Dark"} Mode`}
             data-cursor="interactive"
           >
-            <div className="grid grid-cols-8 gap-[1px] w-[18px] h-[18px]">
-              {HAND_PIXELS.map((p, i) => (
-                <div
-                  key={`hand-${i}`}
-                  className={`w-full h-full ${
-                    p === 1
-                      ? isActive
-                        ? "bg-[#FF3B30]"
-                        : "bg-white group-hover:bg-[#FF3B30] transition-colors duration-300"
-                      : "bg-transparent"
-                  }`}
-                />
-              ))}
-            </div>
-          </button>
-
-          {/* Theme Switcher Button */}
-          {setTheme && (
-            <button
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              className="group focus:outline-none p-1.5 border border-zinc-800 hover:border-[#FF3B30] bg-[#0c0c0c] shadow-lg rounded-none transition-all duration-300 cursor-pointer select-none theme-toggle keep-dark"
-              title={`Switch to ${theme === "dark" ? "Light" : "Dark"} Mode`}
-              data-cursor="interactive"
-            >
-              {theme === "dark" ? (
-                <div className="grid grid-cols-8 gap-[1px] w-[18px] h-[18px]">
-                  {SUN_PIXELS.map((p, i) => (
-                    <div
-                      key={`sun-${i}`}
-                      className={`w-full h-full ${
-                        p === 1
-                          ? "bg-white group-hover:bg-[#FF3B30] transition-colors duration-300"
-                          : "bg-transparent"
-                      }`}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <div className="grid grid-cols-8 gap-[1px] w-[18px] h-[18px]">
-                  {MOON_PIXELS.map((p, i) => (
-                    <div
-                      key={`moon-${i}`}
-                      className={`w-full h-full ${
-                        p === 1
-                          ? "bg-white group-hover:bg-[#FF3B30] transition-colors duration-300"
-                          : "bg-transparent"
-                      }`}
-                    />
-                  ))}
-                </div>
-              )}
-            </button>
-          )}
-        </div>
-
-        {/* Floating active webcam preview lens panel or error container */}
-        {(isActive || cameraError) && !isMinimized && (
-          <div className="w-68 md:w-72 border border-zinc-800 bg-[#0c0c0e] shadow-2xl p-2 flex flex-col gap-2 keep-dark animate-fade-in mt-1">
-            <div className="flex items-center justify-between text-[8px] font-mono text-zinc-500 border-b border-zinc-900 pb-1 px-1">
-              <span className="flex items-center gap-1">
-                <span
-                  className={`w-1.5 h-1.5 rounded-full ${
-                    cameraError
-                      ? "bg-[#FF3B30]"
-                      : handDetected
-                      ? "bg-emerald-500 animate-pulse"
-                      : "bg-amber-500 animate-ping"
-                  }`}
-                />
-                {cameraError ? "CAMERA ACCESS BLOCKED" : handDetected ? "HAND ACQUIRED" : "ALIGNING..."}
-              </span>
-              <div className="flex items-center gap-2">
-                {!cameraError && <span>{fps} FPS</span>}
-                <button
-                  onClick={() => setShowDebugPanel((prev) => !prev)}
-                  className={`hover:text-[#FF3B30] transition-colors text-[8px] font-mono ${
-                    showDebugPanel ? "text-[#FF3B30] font-bold" : "text-zinc-500"
-                  }`}
-                  title="Toggle Debug Telemetry Panel"
-                >
-                  [DEBUG]
-                </button>
-                <button
-                  onClick={() => setIsGuideOpen(true)}
-                  className="hover:text-[#FF3B30] transition-colors text-zinc-400"
-                  title="Gesture Guide"
-                >
-                  [G]
-                </button>
-                <button
-                  onClick={() => {
-                    setIsActive(false);
-                    setCameraError(null);
-                  }}
-                  className="hover:text-[#FF3B30] transition-colors text-zinc-400"
-                  title="Close Widget"
-                >
-                  [CLOSE]
-                </button>
-              </div>
-            </div>
-
-            {cameraError ? (
-              <div className="p-3 bg-[#180808] border border-[#FF3B30]/40 flex flex-col gap-2.5">
-                <div className="flex items-start gap-2">
-                  <span className="text-[#FF3B30] text-xs font-mono font-bold">⚠️</span>
-                  <div className="flex flex-col gap-1">
-                    <span className="font-mono text-[9px] uppercase font-bold text-[#FF3B30] tracking-wider">
-                      Permission Required
-                    </span>
-                    <p className="text-[10px] text-zinc-300 leading-relaxed font-sans">
-                      {cameraError}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center justify-end gap-2 pt-1.5 border-t border-zinc-900">
-                  <button
-                    onClick={() => {
-                      setCameraError(null);
-                      if (isActive) {
-                        startTracking();
-                      } else {
-                        setIsActive(true);
-                      }
-                    }}
-                    className="bg-[#FF3B30] hover:bg-white text-black font-mono text-[9px] font-bold px-2.5 py-1 uppercase tracking-wider transition-colors cursor-pointer"
-                  >
-                    Retry Access
-                  </button>
-                  <button
-                    onClick={() => {
-                      setCameraError(null);
-                      setIsActive(false);
-                    }}
-                    className="bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white font-mono text-[9px] px-2.5 py-1 border border-zinc-800 uppercase tracking-wider transition-colors cursor-pointer"
-                  >
-                    Dismiss
-                  </button>
-                </div>
+            {theme === "dark" ? (
+              <div className="grid grid-cols-8 gap-[1px] w-[18px] h-[18px]">
+                {SUN_PIXELS.map((p, i) => (
+                  <div
+                    key={`sun-${i}`}
+                    className={`w-full h-full ${
+                      p === 1
+                        ? "bg-white group-hover:bg-[#FF3B30] transition-colors duration-300"
+                        : "bg-transparent"
+                    }`}
+                  />
+                ))}
               </div>
             ) : (
-              <div className="relative aspect-video bg-black overflow-hidden border border-zinc-900">
-                <video
-                  ref={videoRef}
-                  className="w-full h-full object-cover scale-x-[-1]"
-                  autoPlay
-                  playsInline
-                  muted
-                />
-                <canvas
-                  ref={canvasRef}
-                  className="absolute top-0 left-0 w-full h-full scale-x-[-1] pointer-events-none"
-                />
-
-                {/* Micro-loading spinner mask overlay */}
-                {loadingText && (
-                  <div className="absolute inset-0 bg-black/90 flex flex-col items-center justify-center p-3 text-center space-y-1">
-                    <div className="w-4 h-4 border border-t-[#FF3B30] border-zinc-800 rounded-full animate-spin"></div>
-                    <span className="text-[8px] font-mono uppercase tracking-widest text-zinc-500">
-                      {loadingText}
-                    </span>
-                  </div>
-                )}
-
-                {/* Active Gesture Mode HUD badge */}
-                {debugInfo.handDetected && (
+              <div className="grid grid-cols-8 gap-[1px] w-[18px] h-[18px]">
+                {MOON_PIXELS.map((p, i) => (
                   <div
-                    className={`absolute bottom-1.5 right-1.5 px-2 py-0.5 text-[8px] font-mono uppercase tracking-widest font-bold text-white shadow-md transition-all ${
-                      debugInfo.gesture === "pinch"
-                        ? "bg-[#FF3B30] border border-[#ff6961] animate-pulse"
-                        : debugInfo.gesture === "scroll"
-                        ? "bg-amber-600 border border-amber-400"
-                        : debugInfo.gesture === "pointer"
-                        ? "bg-emerald-650 border border-emerald-500"
-                        : "bg-zinc-800 border border-zinc-700"
+                    key={`moon-${i}`}
+                    className={`w-full h-full ${
+                      p === 1
+                        ? "bg-white group-hover:bg-[#FF3B30] transition-colors duration-300"
+                        : "bg-transparent"
                     }`}
-                  >
-                    {debugInfo.gesture === "pointer" && "POINTER [1 FINGER]"}
-                    {debugInfo.gesture === "pinch" && "PINCH // CLICK"}
-                    {debugInfo.gesture === "scroll" && "SCROLL [3+ FINGERS]"}
-                    {debugInfo.gesture === "idle" && "IDLE"}
-                  </div>
-                )}
+                  />
+                ))}
               </div>
             )}
-
-            {!cameraError && showDebugPanel && (
-              <div className="text-[8px] font-mono text-zinc-400 leading-normal px-2.5 bg-black/60 py-2 border border-zinc-900 flex flex-col gap-1 select-none">
-                <div className="flex items-center justify-between border-b border-zinc-900 pb-1">
-                  <span className="text-zinc-500 uppercase font-bold tracking-wider">GESTURE ENGINE</span>
-                  <span
-                    className={`px-1 rounded text-[7px] font-bold ${
-                      debugInfo.handDetected ? "bg-emerald-500/20 text-emerald-400" : "bg-zinc-800 text-zinc-500"
-                    }`}
-                  >
-                    {debugInfo.handDetected ? "ONLINE" : "OFFLINE"}
-                  </span>
-                </div>
-                <div className="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[8px]">
-                  <div className="flex justify-between">
-                    <span className="text-zinc-500">MODE:</span>
-                    <span
-                      className={`font-bold uppercase ${
-                        debugInfo.gesture === "pointer"
-                          ? "text-emerald-400"
-                          : debugInfo.gesture === "pinch"
-                          ? "text-[#FF3B30]"
-                          : debugInfo.gesture === "scroll"
-                          ? "text-amber-400"
-                          : "text-zinc-400"
-                      }`}
-                    >
-                      {debugInfo.gesture}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-zinc-500">FINGERS:</span>
-                    <span className="font-bold text-zinc-300">{debugInfo.fingerCount} EXTENDED</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-zinc-500">CURSOR:</span>
-                    <span className="font-mono text-zinc-300">
-                      {Math.round(debugInfo.cursor.x)}, {Math.round(debugInfo.cursor.y)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-zinc-500">PINCH:</span>
-                    <span
-                      className={`font-bold ${
-                        debugInfo.pinchState === "PINCHING" ? "text-[#FF3B30]" : "text-zinc-400"
-                      }`}
-                    >
-                      {debugInfo.pinchState} ({(debugInfo.pinchRatio * 100).toFixed(0)}%)
-                    </span>
-                  </div>
-                </div>
-                {debugInfo.gesture === "scroll" && Math.abs(debugInfo.scrollDelta) > 0.001 && (
-                  <div className="flex justify-between text-[7.5px] pt-0.5 border-t border-zinc-900/60 text-amber-400">
-                    <span>KINETIC SCROLL:</span>
-                    <span>{debugInfo.scrollDelta > 0 ? "SCROLLING DOWN ↓" : "SCROLLING UP ↑"}</span>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+          </button>
         )}
       </div>
 
-      {/* Touchless Virtual Pointer (controlled by HandGestureController) */}
+      {/* Floating Glassmorphic Camera Widget (Fixed at top: 24px, right: 24px) */}
+      {(isActive || cameraError) && (
+        <div
+          className="fixed top-6 right-6 z-50 w-[220px] sm:w-[240px] md:w-[256px] aspect-video rounded-[18px] overflow-hidden border border-white/15 bg-black/40 backdrop-blur-[18px] shadow-[0_12px_40px_rgba(0,0,0,0.25)] transition-all duration-300 group"
+          style={{ WebkitBackdropFilter: "blur(18px)" }}
+        >
+          {cameraError ? (
+            /* Minimal glass error state */
+            <div className="w-full h-full flex flex-col items-center justify-center p-3 text-center bg-black/60">
+              <span className="text-[10px] text-zinc-300 leading-tight mb-2">
+                {cameraError}
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    setCameraError(null);
+                    startTracking();
+                  }}
+                  className="px-2 py-1 text-[9px] font-mono uppercase font-bold bg-[#FF3B30] text-black rounded flex items-center gap-1 cursor-pointer hover:bg-white transition-colors"
+                >
+                  <RefreshCw className="w-2.5 h-2.5" /> Retry
+                </button>
+                <button
+                  onClick={() => {
+                    setCameraError(null);
+                    setIsActive(false);
+                  }}
+                  className="px-2 py-1 text-[9px] font-mono uppercase bg-white/10 hover:bg-white/20 text-white rounded cursor-pointer transition-colors"
+                >
+                  Dismiss
+                </button>
+              </div>
+            </div>
+          ) : (
+            /* Minimal Camera Lens Viewport */
+            <div className="relative w-full h-full bg-black/50 overflow-hidden">
+              <video
+                ref={videoRef}
+                className="w-full h-full object-cover scale-x-[-1]"
+                autoPlay
+                playsInline
+                muted
+              />
+              <canvas
+                ref={canvasRef}
+                className="absolute inset-0 w-full h-full scale-x-[-1] pointer-events-none"
+              />
+
+              {/* Minimal Loading Spinner */}
+              {loadingText && (
+                <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center p-2 text-center">
+                  <div className="w-4 h-4 border-2 border-t-[#FF3B30] border-white/20 rounded-full animate-spin mb-1.5" />
+                  <span className="text-[9px] font-mono text-zinc-400 uppercase tracking-wider">
+                    {loadingText}
+                  </span>
+                </div>
+              )}
+
+              {/* Subtle Hand Detected Dot Indicator */}
+              <div className="absolute top-2 left-2 pointer-events-none flex items-center gap-1">
+                <span
+                  className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
+                    handDetected
+                      ? "bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]"
+                      : "bg-white/30 animate-pulse"
+                  }`}
+                />
+              </div>
+
+              {/* Subtle Glass Close Button (visible on widget hover) */}
+              <button
+                onClick={() => {
+                  setIsActive(false);
+                  setCameraError(null);
+                }}
+                className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-black/50 hover:bg-black/80 text-white/80 hover:text-white flex items-center justify-center backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 border border-white/10 cursor-pointer"
+                title="Stop Hand Navigation"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </div>
+          )}
+
+          {/* Developer-only debug overlay - hidden in normal usage */}
+          {DEBUG_HAND_TRACKING && (
+            <div className="absolute bottom-0 inset-x-0 bg-black/85 p-1.5 text-[7px] font-mono text-zinc-400 flex justify-between border-t border-zinc-900">
+              <span>{debugInfo.gesture.toUpperCase()}</span>
+              <span>{debugInfo.fingerCount}F</span>
+              <span>
+                {debugInfo.cursor.x},{debugInfo.cursor.y}
+              </span>
+              <span>{debugInfo.pinchState}</span>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Touchless Virtual Hand Cursor */}
       {isActive && <div id="hand-cursor" ref={handCursorRef} />}
 
-      {/* Futuristic Carbon-Dark Hand Interaction Guide Modal */}
+      {/* Spatial Calibration / Gesture Guide Modal (Accessible via [G] key) */}
       {isGuideOpen && (
-        <div 
-          className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-fade-in"
+        <div
+          className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fade-in"
           onClick={() => setIsGuideOpen(false)}
         >
-          <div 
-            className="relative w-full max-w-lg bg-[#0c0c0e] border border-zinc-800 p-6 md:p-8 shadow-2xl flex flex-col gap-6 text-white text-left font-sans animate-zoom-in max-h-[90vh] overflow-y-auto keep-dark"
+          <div
+            className="relative w-full max-w-md bg-[#0c0c0e] border border-white/15 p-6 rounded-2xl shadow-2xl flex flex-col gap-5 text-white text-left font-sans animate-zoom-in max-h-[90vh] overflow-y-auto keep-dark"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Header section with telemetry-inspired design */}
-            <div className="flex justify-between items-center border-b border-zinc-900 pb-4">
-              <div className="flex flex-col gap-1">
-                <span className="text-[10px] font-mono tracking-widest text-[#FF3B30] uppercase font-bold flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#FF3B30] animate-ping" />
-                  SPATIAL CALIBRATION PANEL
+            <div className="flex justify-between items-center border-b border-zinc-900 pb-3">
+              <div>
+                <span className="text-[9px] font-mono tracking-widest text-[#FF3B30] uppercase font-bold">
+                  GESTURE CALIBRATION
                 </span>
-                <h3 className="font-sans font-semibold tracking-tight text-lg text-zinc-100 uppercase">
-                  Touchless Gesture Navigation
+                <h3 className="font-semibold text-base text-zinc-100 uppercase mt-0.5">
+                  Touchless Controls
                 </h3>
               </div>
-              <button 
+              <button
                 onClick={() => setIsGuideOpen(false)}
-                className="text-zinc-500 hover:text-white hover:border-[#FF3B30] transition-colors text-[9px] font-mono px-2 py-1 border border-zinc-850 bg-black/60 cursor-pointer select-none"
+                className="text-zinc-400 hover:text-white text-[10px] font-mono px-2 py-1 border border-zinc-800 bg-zinc-900 rounded cursor-pointer"
               >
-                [ESC] CLOSE
+                [ESC]
               </button>
             </div>
 
-            {/* Instruction Grid */}
-            <div className="flex flex-col gap-5">
-              
-              {/* Step 1: Cursor movement */}
-              <div className="group flex flex-col md:flex-row items-start gap-4 p-3 border border-zinc-900/60 bg-zinc-950/20 hover:border-zinc-800 hover:bg-zinc-950/40 transition-all duration-300">
-                <div className="w-12 h-12 shrink-0 border border-zinc-900 bg-black/40 flex items-center justify-center relative overflow-hidden">
-                  <div className="absolute inset-0 flex items-center justify-center opacity-30 select-none pointer-events-none">
-                    <div className="w-8 h-8 rounded-full border border-dashed border-zinc-700 animate-spin" style={{ animationDuration: '10s' }} />
-                  </div>
-                  <div className="w-2.5 h-2.5 rounded-full bg-[#FF3B30] shadow-[0_0_8px_#FF3B30] animate-pulse" />
-                </div>
-                <div className="flex flex-col gap-1">
-                  <h4 className="font-mono text-[10px] uppercase font-bold text-zinc-400 tracking-wider">
-                    01 // ☝️ INDEX FINGER: NATURAL VIRTUAL CURSOR
+            <div className="flex flex-col gap-3.5">
+              <div className="p-3 border border-zinc-900 bg-zinc-950/40 rounded-lg flex items-start gap-3">
+                <span className="text-lg">☝️</span>
+                <div className="flex flex-col">
+                  <h4 className="font-mono text-[10px] uppercase font-bold text-zinc-200">
+                    Point: Virtual Cursor
                   </h4>
-                  <p className="text-zinc-300 text-xs leading-relaxed font-sans">
-                    Extend your <strong className="text-[#FF3B30]">Index Finger</strong> with other fingers curled into your palm. The system maps your index fingertip to physical viewport coordinates with edge margin scaling so you can reach all corners comfortably.
+                  <p className="text-zinc-400 text-xs mt-0.5 leading-relaxed">
+                    Extend your index finger with other fingers folded. The cursor follows your fingertip across the entire viewport.
                   </p>
                 </div>
               </div>
 
-              {/* Step 2: Click gesture */}
-              <div className="group flex flex-col md:flex-row items-start gap-4 p-3 border border-zinc-900/60 bg-zinc-950/20 hover:border-zinc-800 hover:bg-zinc-950/40 transition-all duration-300">
-                <div className="w-12 h-12 shrink-0 border border-zinc-900 bg-black/40 flex items-center justify-center relative overflow-hidden">
-                  <div className="absolute w-6 h-6 rounded-full border border-zinc-850 animate-ping opacity-40" />
-                  <div className="flex items-center gap-[1px]">
-                    <div className="w-2 h-2 rounded-full bg-[#FF3B30] shadow-[0_0_4px_#FF3B30]" />
-                    <div className="w-1 h-[1px] bg-dashed bg-zinc-600" />
-                    <div className="w-2 h-2 rounded-full bg-white" />
-                  </div>
-                </div>
-                <div className="flex flex-col gap-1">
-                  <h4 className="font-mono text-[10px] uppercase font-bold text-zinc-400 tracking-wider">
-                    02 // 🤏 PINCH-TO-CLICK INTERACTION
+              <div className="p-3 border border-zinc-900 bg-zinc-950/40 rounded-lg flex items-start gap-3">
+                <span className="text-lg">🤏</span>
+                <div className="flex flex-col">
+                  <h4 className="font-mono text-[10px] uppercase font-bold text-zinc-200">
+                    Pinch: Click Element
                   </h4>
-                  <p className="text-zinc-300 text-xs leading-relaxed font-sans">
-                    While pointing, touch your <strong className="text-[#FF3B30]">Thumb</strong> and <strong className="text-[#FF3B30]">Index Finger</strong> tips together. The cursor freezes in place to neutralize jitter, dispatches a genuine click to the element underneath, and produces an expanding ripple indicator.
+                  <p className="text-zinc-400 text-xs mt-0.5 leading-relaxed">
+                    Touch your thumb and index fingertip together. Dispatches a single click on the element under the cursor.
                   </p>
                 </div>
               </div>
 
-              {/* Step 3: 3+ Finger Scroll gesture */}
-              <div className="group flex flex-col md:flex-row items-start gap-4 p-3 border border-zinc-900/60 bg-zinc-950/20 hover:border-zinc-800 hover:bg-zinc-950/40 transition-all duration-300">
-                <div className="w-12 h-12 shrink-0 border border-zinc-900 bg-black/40 flex items-center justify-center relative overflow-hidden flex-col gap-0.5">
-                  <span className="text-[10px] font-bold text-[#FF3B30] animate-bounce">▲</span>
-                  <span className="text-[10px] font-bold text-zinc-500 animate-bounce" style={{ animationDelay: '0.2s' }}>▼</span>
-                </div>
-                <div className="flex flex-col gap-1">
-                  <h4 className="font-mono text-[10px] uppercase font-bold text-zinc-400 tracking-wider">
-                    03 // 🖐️ 3+ FINGERS: FLUID KINETIC SCROLLING
+              <div className="p-3 border border-zinc-900 bg-zinc-950/40 rounded-lg flex items-start gap-3">
+                <span className="text-lg">🖐️</span>
+                <div className="flex flex-col">
+                  <h4 className="font-mono text-[10px] uppercase font-bold text-zinc-200">
+                    3+ Fingers: Scroll Page
                   </h4>
-                  <p className="text-zinc-300 text-xs leading-relaxed font-sans">
-                    Open your hand with <strong className="text-zinc-100">3 or more fingers extended</strong> (e.g. open palm). Moving your hand up or down continuously scrolls the webpage smoothly with deadzone filtering and inertial momentum.
+                  <p className="text-zinc-400 text-xs mt-0.5 leading-relaxed">
+                    Show 3 or more open fingers. Moving your hand up or down smoothly scrolls the page.
                   </p>
                 </div>
               </div>
-
             </div>
 
-            {/* Micro instructions / shortcuts footnote */}
-            <div className="mt-2 p-3 bg-zinc-950/50 border border-zinc-900 text-[10px] text-zinc-500 leading-normal font-mono flex items-center justify-between">
-              <span>SHORTCUT: PRESS <kbd className="px-1.5 py-0.5 bg-zinc-900 text-[#FF3B30] border border-zinc-800 rounded font-bold">G</kbd> ON KEYBOARD</span>
-              <span>ESC DISMISSAL SUPPORTED</span>
+            <div className="text-[10px] text-zinc-500 font-mono flex items-center justify-between border-t border-zinc-900 pt-3">
+              <span>KEYBOARD SHORTCUT: <kbd className="text-[#FF3B30] font-bold">G</kbd></span>
+              <span>PRESS ESC TO CLOSE</span>
             </div>
           </div>
         </div>
