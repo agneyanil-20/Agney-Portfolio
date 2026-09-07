@@ -317,10 +317,84 @@ html.light li span.text-zinc-400 {
    VIRTUAL MOUSE POINTER EFFECTS
    ========================================================== */
 
-/* programmatically hide native OS cursor when hand is detected on active tracking */
-.hand-tracking-active,
-.hand-tracking-active * {
-  cursor: none !important;
+/* Hand cursor overlay */
+#hand-cursor {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 22px;
+  height: 22px;
+  margin-left: -11px;
+  margin-top: -11px;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 999999;
+  border: 2px solid #FF3B30;
+  background: rgba(255, 59, 48, 0.15);
+  box-shadow: 0 0 14px rgba(255, 59, 48, 0.55), inset 0 0 6px rgba(255, 59, 48, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.2s ease, width 0.15s ease, height 0.15s ease, margin 0.15s ease, background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  will-change: transform;
+}
+
+#hand-cursor::after {
+  content: "";
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background-color: #ffffff;
+  transition: transform 0.15s ease, background-color 0.15s ease;
+}
+
+/* Hovering over clickable element */
+#hand-cursor[data-mode="hover"] {
+  width: 28px;
+  height: 28px;
+  margin-left: -14px;
+  margin-top: -14px;
+  border-color: #FF3B30;
+  background: rgba(255, 59, 48, 0.28);
+  box-shadow: 0 0 20px rgba(255, 59, 48, 0.85), inset 0 0 8px rgba(255, 59, 48, 0.45);
+}
+
+#hand-cursor[data-mode="hover"]::after {
+  background-color: #FF3B30;
+  transform: scale(1.3);
+}
+
+/* Pinch / Click mode */
+#hand-cursor[data-mode="pinch"] {
+  width: 18px;
+  height: 18px;
+  margin-left: -9px;
+  margin-top: -9px;
+  background: #FF3B30;
+  border-color: #ffffff;
+  box-shadow: 0 0 25px #FF3B30, 0 0 10px #ffffff;
+}
+
+#hand-cursor[data-mode="pinch"]::after {
+  background-color: #ffffff;
+  transform: scale(0.6);
+}
+
+/* Scroll mode */
+#hand-cursor[data-mode="scroll"] {
+  width: 32px;
+  height: 32px;
+  margin-left: -16px;
+  margin-top: -16px;
+  border-color: #f59e0b;
+  background: rgba(245, 158, 11, 0.2);
+  box-shadow: 0 0 16px rgba(245, 158, 11, 0.6);
+}
+
+#hand-cursor[data-mode="scroll"]::after {
+  background-color: #fbbf24;
+  width: 6px;
+  height: 6px;
 }
 
 /* Programmatically-triggered hover state simulation for interactive nodes */
@@ -328,7 +402,7 @@ html.light li span.text-zinc-400 {
 .spatial-hover {
   outline: 2px solid #FF3B30 !important;
   outline-offset: 2px;
-  transform: scale(1.03) !important;
+  transform: scale(1.02) !important;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
   filter: brightness(1.15) !important;
   box-shadow: 0 0 16px rgba(255, 59, 48, 0.45) !important;

@@ -5,6 +5,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { HandLandmarker, FilesetResolver } from "@mediapipe/tasks-vision";
+import { HandGestureController, GestureDebugInfo } from "../utils/HandGestureController";
 
 // Beautiful custom pixel art icons matching the Moon & Sun toggle
 const HAND_PIXELS = [
@@ -49,75 +50,74 @@ export default function HandScrollNav({ theme, setTheme }: HandScrollNavProps) {
   const [isActive, setIsActive] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [isGuideOpen, setIsGuideOpen] = useState(false);
+  const [showDebugPanel, setShowDebugPanel] = useState(true);
   const [statusText, setStatusText] = useState("Off");
   const [loadingText, setLoadingText] = useState("");
   const [handDetected, setHandDetected] = useState(false);
   const [fps, setFps] = useState(0);
-  const [scrollDirection, setScrollDirection] = useState<string>("STATIONARY");
-  const [isHovering, setIsHovering] = useState(false);
-  const [isClicked, setIsClicked] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
+
+  // Real-time debug telemetry state
+  const [debugInfo, setDebugInfo] = useState<GestureDebugInfo>({
+    isActive: false,
+    handDetected: false,
+    gesture: "idle",
+    fingerCount: 0,
+    cursor: { x: typeof window !== "undefined" ? window.innerWidth / 2 : 0, y: typeof window !== "undefined" ? window.innerHeight / 2 : 0 },
+    pinchState: "OPEN",
+    pinchRatio: 1.0,
+    scrollDelta: 0,
+  });
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const landmarkerRef = useRef<HandLandmarker | null>(null);
   const animationFrameRef = useRef<number | null>(null);
+  const handCursorRef = useRef<HTMLDivElement>(null);
 
-  // ===================================================
-  // SWIPE-AND-RESET & SPATIAL INTERACTION COEFFICIENTS
-  // ===================================================
-  const GESTURE_COOLDOWN_MS = 750;     // Delay before next gesture is permitted (600ms - 800ms)
-  const SWIPE_THRESHOLD_Y = 0.15;      // Delta Y vertical scale threshold required (0.15)
-  const SWIPE_WINDOW_MS = 150;         // Time window to evaluate the rapid change (150ms)
-  const SCROLL_DISTANCE = 450;         // Fixed scroll distance applied smoothly on swipe (px)
-  const CURSOR_SMOOTHING_EASE = 0.15;  // Linear Interpolation (Lerp) speed weighting
-  const MAGNETIC_PULL_STRENGTH = 0.35; // Strength of the magnetic snap towards element center
-  const PINCH_THRESHOLD = 0.04;        // 3D Distance coefficient below which a pinch is registered (< 0.04)
-  const CLICK_DEBOUNCE_MS = 500;       // Minimum milliseconds between registered click events
-
-  // Hand movement tracking buffers
-  const touchHistoryRef = useRef<{ y: number; t: number }[]>([]);
-  const cooldownUntilRef = useRef<number>(0);
-  const lastClickTimeRef = useRef<number>(0);
+  // Gesture controller engine
+  const gestureControllerRef = useRef<HandGestureController | null>(null);
 
   const fpsFrameCountRef = useRef<number>(0);
   const fpsLastTimeRef = useRef<number>(0);
 
-  // Mapped screen-space cursor tracking coordinates
-  const targetPosRef = useRef({ x: window.innerWidth / 2, y: window.innerHeight / 2 });
-  const actualPosRef = useRef({ x: window.innerWidth / 2, y: window.innerHeight / 2 });
-  const virtualCursorRef = useRef<HTMLDivElement>(null);
-  const prevHoveredElementRef = useRef<Element | null>(null);
-  const cursorAnimFrameRef = useRef<number | null>(null);
-  const isPinchingRef = useRef(false);  // Sync tracking lock for freeze protocol
-
-  // Track body tracking class active state
+  // Initialize gesture controller
   useEffect(() => {
-    if (isActive && handDetected) {
-      document.body.classList.add("hand-tracking-active");
-    } else {
-      document.body.classList.remove("hand-tracking-active");
+    gestureControllerRef.current = new HandGestureController((info) => {
+      setDebugInfo(info);
+    });
+
+    if (handCursorRef.current) {
+      gestureControllerRef.current.bindCursorElement(handCursorRef.current);
     }
+
     return () => {
-      document.body.classList.remove("hand-tracking-active");
+      gestureControllerRef.current?.destroy();
     };
-  }, [isActive, handDetected]);
+  }, []);
+
+  // Bind cursor element whenever isActive toggles and element renders
+  useEffect(() => {
+    if (gestureControllerRef.current && handCursorRef.current) {
+      gestureControllerRef.current.bindCursorElement(handCursorRef.current);
+    }
+  }, [isActive]);
 
   // Handle keyboard shortcut [G] and [Escape] to toggle gesture guide overlay
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const activeElement = document.activeElement;
-      const isInput = activeElement && (
-        activeElement.tagName === "INPUT" || 
-        activeElement.tagName === "TEXTAREA" || 
-        (activeElement as HTMLElement).isContentEditable
-      );
+      const isInput =
+        activeElement &&
+        (activeElement.tagName === "INPUT" ||
+          activeElement.tagName === "TEXTAREA" ||
+          (activeElement as HTMLElement).isContentEditable);
       if (isInput) return;
 
       if (e.key === "g" || e.key === "G") {
         e.preventDefault();
-        setIsGuideOpen(prev => !prev);
+        setIsGuideOpen((prev) => !prev);
       } else if (e.key === "Escape" && isGuideOpen) {
         setIsGuideOpen(false);
       }
@@ -128,101 +128,6 @@ export default function HandScrollNav({ theme, setTheme }: HandScrollNavProps) {
     };
   }, [isGuideOpen]);
 
-  // Utility to trace clickable elements recursively up the DOM tree (e.g. for inner spans or SVG icons)
-  const findClickableElement = (el: Element | null): Element | null => {
-    let current: Element | null = el;
-    for (let i = 0; i < 4; i++) {
-      if (!current) break;
-      const tagName = current.tagName?.toLowerCase();
-      const isInteractiveTag = ["button", "a", "input", "select", "textarea"].includes(tagName);
-      const hasPointerCursor = window.getComputedStyle(current).cursor === "pointer";
-      const hasCursorAttr = current.getAttribute("data-cursor") === "interactive";
-      if (isInteractiveTag || hasPointerCursor || hasCursorAttr || current.classList.contains("cursor-pointer")) {
-        return current;
-      }
-      current = current.parentElement;
-    }
-    return null;
-  };
-
-  const cleanupHover = () => {
-    if (prevHoveredElementRef.current) {
-      prevHoveredElementRef.current.classList.remove("hovered");
-      prevHoveredElementRef.current.classList.remove("spatial-hover");
-      prevHoveredElementRef.current = null;
-    }
-    setIsHovering(false);
-  };
-
-  const startCursorLoop = () => {
-    const updateCursor = () => {
-      const target = targetPosRef.current;
-      const actual = actualPosRef.current;
-
-      // FREEZE PROTOCOL: When a pinch-to-click gesture is actively engaged, freeze updates 
-      // to lock the cursor coordinates, neutralizing accidental camera drift/hand jitter.
-      if (!isPinchingRef.current) {
-        let lerpTargetX = target.x;
-        let lerpTargetY = target.y;
-
-        // MAGNETIC SNAP: If we are hovering over an interactive element, pull the lerp target
-        // towards the element's center to provide a 'magnetic' sticky feel and combat hand shake.
-        if (prevHoveredElementRef.current) {
-          const rect = prevHoveredElementRef.current.getBoundingClientRect();
-          const centerX = rect.left + rect.width / 2;
-          const centerY = rect.top + rect.height / 2;
-          
-          lerpTargetX = lerpTargetX + (centerX - lerpTargetX) * MAGNETIC_PULL_STRENGTH;
-          lerpTargetY = lerpTargetY + (centerY - lerpTargetY) * MAGNETIC_PULL_STRENGTH;
-        }
-
-        // Linear interpolation (Lerp) for silky smooth cursor tracking with custom weighted ease
-        actual.x = actual.x + (lerpTargetX - actual.x) * CURSOR_SMOOTHING_EASE;
-        actual.y = actual.y + (lerpTargetY - actual.y) * CURSOR_SMOOTHING_EASE;
-      }
-
-      // Update virtual cursor positions directly on DOM element ref
-      if (virtualCursorRef.current) {
-        virtualCursorRef.current.style.transform = `translate3d(${actual.x}px, ${actual.y}px, 0)`;
-      }
-
-      // Live hover tracing detection
-      if (handDetected) {
-        const rawElement = document.elementFromPoint(actual.x, actual.y);
-        const clickableElement = findClickableElement(rawElement);
-
-        if (clickableElement !== prevHoveredElementRef.current) {
-          if (prevHoveredElementRef.current) {
-            prevHoveredElementRef.current.classList.remove("hovered");
-            prevHoveredElementRef.current.classList.remove("spatial-hover");
-          }
-          if (clickableElement) {
-            clickableElement.classList.add("hovered");
-            clickableElement.classList.add("spatial-hover");
-            setIsHovering(true);
-          } else {
-            setIsHovering(false);
-          }
-          prevHoveredElementRef.current = clickableElement;
-        }
-      } else {
-        cleanupHover();
-      }
-
-      cursorAnimFrameRef.current = requestAnimationFrame(updateCursor);
-    };
-
-    cursorAnimFrameRef.current = requestAnimationFrame(updateCursor);
-  };
-
-  const stopCursorLoop = () => {
-    if (cursorAnimFrameRef.current) {
-      cancelAnimationFrame(cursorAnimFrameRef.current);
-      cursorAnimFrameRef.current = null;
-    }
-    cleanupHover();
-  };
-
   // Initialize MediaPipe HandLandmarker when turning active
   const startTracking = async () => {
     try {
@@ -231,19 +136,19 @@ export default function HandScrollNav({ theme, setTheme }: HandScrollNavProps) {
       setLoadingText("Loading WASM module...");
 
       if (!landmarkerRef.current) {
-        // Resolve task vision using external filesets on jsdelivr
         const vision = await FilesetResolver.forVisionTasks(
           "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.8/wasm"
         );
-        
+
         setLoadingText("Loading AI model...");
         landmarkerRef.current = await HandLandmarker.createFromOptions(vision, {
           baseOptions: {
-            modelAssetPath: "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task",
-            delegate: "GPU"
+            modelAssetPath:
+              "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task",
+            delegate: "GPU",
           },
           runningMode: "VIDEO",
-          numHands: 1
+          numHands: 1,
         });
       }
 
@@ -255,7 +160,7 @@ export default function HandScrollNav({ theme, setTheme }: HandScrollNavProps) {
 
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { width: 320, height: 240, facingMode: "user" },
-        audio: false
+        audio: false,
       });
 
       streamRef.current = stream;
@@ -267,7 +172,6 @@ export default function HandScrollNav({ theme, setTheme }: HandScrollNavProps) {
           setStatusText("Active");
           fpsLastTimeRef.current = performance.now();
           animationFrameRef.current = requestAnimationFrame(predictFrameLoop);
-          startCursorLoop(); // Initialize secondary high-frequency cursor rendering loop
         };
       }
     } catch (err: any) {
@@ -290,7 +194,7 @@ export default function HandScrollNav({ theme, setTheme }: HandScrollNavProps) {
       setLoadingText("");
 
       if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current.getTracks().forEach((track) => track.stop());
         streamRef.current = null;
       }
       if (videoRef.current) {
@@ -304,9 +208,9 @@ export default function HandScrollNav({ theme, setTheme }: HandScrollNavProps) {
       cancelAnimationFrame(animationFrameRef.current);
       animationFrameRef.current = null;
     }
-    stopCursorLoop();
+    gestureControllerRef.current?.destroy();
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
     }
     if (videoRef.current) {
@@ -314,7 +218,6 @@ export default function HandScrollNav({ theme, setTheme }: HandScrollNavProps) {
     }
     setStatusText("Off");
     setHandDetected(false);
-    setScrollDirection("STATIONARY");
     setLoadingText("");
   };
 
@@ -366,7 +269,11 @@ export default function HandScrollNav({ theme, setTheme }: HandScrollNavProps) {
           // Calculate running estimation FPS
           fpsFrameCountRef.current++;
           if (timestamp >= fpsLastTimeRef.current + 1000) {
-            setFps(Math.round((fpsFrameCountRef.current * 1000) / (timestamp - fpsLastTimeRef.current)));
+            setFps(
+              Math.round(
+                (fpsFrameCountRef.current * 1000) / (timestamp - fpsLastTimeRef.current)
+              )
+            );
             fpsFrameCountRef.current = 0;
             fpsLastTimeRef.current = timestamp;
           }
@@ -374,169 +281,15 @@ export default function HandScrollNav({ theme, setTheme }: HandScrollNavProps) {
           if (results.landmarks && results.landmarks.length > 0) {
             setHandDetected(true);
             const landmarks = results.landmarks[0];
-            
+
             // Draw skeleton landmarks in red
             drawHandSkeleton(ctx, landmarks, canvas.width, canvas.height);
 
-            // Shared Time & Common Reference Points
-            const currentTime = timestamp;
-            const indexTip = landmarks[8];
-            const thumbTip = landmarks[4];
-            const wrist = landmarks[0];
-
-            // Helper to calculate 3D Euclidean distance between two landmarks
-            const d3D = (p1: any, p2: any) => Math.sqrt((p1.x - p2.x)**2 + (p1.y - p2.y)**2 + (p1.z - p2.z)**2);
-
-            // Check if fingers are folded (comparing tip distance to wrist vs MCP distance to wrist)
-            const middleFolded = d3D(landmarks[12], wrist) < d3D(landmarks[9], wrist);
-            const ringFolded = d3D(landmarks[16], wrist) < d3D(landmarks[13], wrist);
-            const pinkyFolded = d3D(landmarks[20], wrist) < d3D(landmarks[17], wrist);
-
-            // Unified Gesture State Protocol Definitions
-            const isPointingMode = middleFolded && ringFolded && pinkyFolded;
-            const isOpenHandMode = !middleFolded && !ringFolded && !pinkyFolded;
-
-            if (isOpenHandMode) {
-              // ========================================================
-              // STATE A: TRADITIONAL SCROLL MODE (Open Hand)
-              // ========================================================
-              isPinchingRef.current = false; // Ensure cursor isn't frozen
-
-              // Check if we are currently inside a GESTURE_COOLDOWN_MS period
-              if (currentTime < cooldownUntilRef.current) {
-                setScrollDirection("COOLING_DOWN");
-                // Clear tracking history during cooldown to ensure a fresh reference afterwards
-                touchHistoryRef.current = [];
-              } else {
-                // Maintain position history buffer for the Wrist (Landmark 0)
-                touchHistoryRef.current.push({ y: wrist.y, t: currentTime });
-
-                // Filter out coordinate frames older than the time window
-                const cutoffTime = currentTime - SWIPE_WINDOW_MS;
-                touchHistoryRef.current = touchHistoryRef.current.filter(p => p.t >= cutoffTime);
-
-                if (touchHistoryRef.current.length > 1) {
-                  const oldestPoint = touchHistoryRef.current[0];
-                  const deltaY = wrist.y - oldestPoint.y;
-
-                  // Update Delta Y math for Traditional Scrolling (Delta Y < -0.12 triggers Scroll UP)
-                  if (deltaY < -0.12) {
-                    // Hand moved UP -> trigger scroll UP
-                    window.scrollBy({ top: -window.innerHeight * 0.6, behavior: "smooth" });
-                    setScrollDirection("SWIPE_DETECTED_UP");
-                    cooldownUntilRef.current = currentTime + GESTURE_COOLDOWN_MS;
-                    touchHistoryRef.current = []; // Clear history
-                  } else if (deltaY > 0.12) {
-                    // Hand moved DOWN -> trigger scroll DOWN
-                    window.scrollBy({ top: window.innerHeight * 0.6, behavior: "smooth" });
-                    setScrollDirection("SWIPE_DETECTED_DOWN");
-                    cooldownUntilRef.current = currentTime + GESTURE_COOLDOWN_MS;
-                    touchHistoryRef.current = []; // Clear history
-                  } else {
-                    setScrollDirection("STATIONARY");
-                  }
-                } else {
-                  setScrollDirection("STATIONARY");
-                }
-              }
-            } else if (isPointingMode) {
-              // ========================================================
-              // STATE B: MOUSE & RIGHT-CLICK MODE (Pointing Hand)
-              // ========================================================
-              setScrollDirection("STATIONARY"); // Clear scroll debugging UI indicator
-              touchHistoryRef.current = []; // Clear scroll buffer so transition back is clean
-
-              // Map coordinates dynamically for virtual pointer target x and y (mirror the X axis)
-              const targetX = (1 - indexTip.x) * window.innerWidth;
-              const targetY = indexTip.y * window.innerHeight;
-
-              let isPinchingNow = false;
-
-              if (thumbTip && indexTip) {
-                // Measure 3D distance between THUMB_TIP (4) and INDEX_FINGER_TIP (8)
-                const pinchDistance = d3D(thumbTip, indexTip);
-                
-                // If distance < 0.035, register a pinch
-                if (pinchDistance < 0.035) {
-                  isPinchingNow = true;
-                }
-              }
-
-              // Update the shared pinch reference for the cursor update loop to freeze Lerp 
-              isPinchingRef.current = isPinchingNow;
-
-              // Freeze mapping when actively pinching (locks target position in place)
-              if (!isPinchingNow) {
-                targetPosRef.current = { x: targetX, y: targetY };
-              }
-
-              // Fire precise Right-Click (contextmenu) events upon entering primary pinch lock
-              if (isPinchingNow) {
-                if (currentTime - lastClickTimeRef.current > CLICK_DEBOUNCE_MS) {
-                  lastClickTimeRef.current = currentTime;
-                  
-                  // Trigger CSS class feedback
-                  setIsClicked(true);
-                  setTimeout(() => setIsClicked(false), 200);
-
-                  const frozenX = actualPosRef.current.x;
-                  const frozenY = actualPosRef.current.y;
-                  const targetElement = document.elementFromPoint(frozenX, frozenY);
-
-                  if (targetElement) {
-                    // Programmatically dispatch a custom 'contextmenu' event
-                    const rightClickEvent = new MouseEvent('contextmenu', {
-                      bubbles: true,
-                      cancelable: true,
-                      clientX: frozenX,
-                      clientY: frozenY
-                    });
-                    targetElement.dispatchEvent(rightClickEvent);
-
-                    // Create high-fashion aesthetic pointer feedback simulation ripple
-                    const rip = document.createElement("div");
-                    rip.style.position = "fixed";
-                    rip.style.pointerEvents = "none";
-                    rip.style.borderRadius = "50%";
-                    rip.style.border = "2px solid #FF3B30";
-                    rip.style.backgroundColor = "rgba(255, 59, 48, 0.2)";
-                    rip.style.width = "40px";
-                    rip.style.height = "40px";
-                    rip.style.left = `${frozenX}px`;
-                    rip.style.top = `${frozenY}px`;
-                    rip.style.transform = "translate(-50%, -50%) scale(0.1)";
-                    rip.style.opacity = "1";
-                    rip.style.transition = "all 0.4s cubic-bezier(0.16, 1, 0.3, 1)";
-                    rip.style.zIndex = "10000";
-                    document.body.appendChild(rip);
-
-                    // Trigger scale animation
-                    requestAnimationFrame(() => {
-                      rip.style.transform = "translate(-50%, -50%) scale(1.6)";
-                      rip.style.opacity = "0";
-                    });
-
-                    setTimeout(() => {
-                      rip.remove();
-                    }, 400);
-                  }
-                }
-              }
-            } else {
-              // Transitionary states: neither full open nor full pointing
-              isPinchingRef.current = false;
-              setScrollDirection("STATIONARY");
-              touchHistoryRef.current = [];
-            }
+            // Process touchless gestures through HandGestureController
+            gestureControllerRef.current?.processLandmarks(landmarks);
           } else {
             setHandDetected(false);
-            // Maintain COOLING_DOWN display if within time limit even after hand exits the frame
-            if (timestamp < cooldownUntilRef.current) {
-              setScrollDirection("COOLING_DOWN");
-            } else {
-              setScrollDirection("STATIONARY");
-            }
-            touchHistoryRef.current = [];
+            gestureControllerRef.current?.handleHandLost();
           }
         }
       }
@@ -671,6 +424,15 @@ export default function HandScrollNav({ theme, setTheme }: HandScrollNavProps) {
               <div className="flex items-center gap-2">
                 {!cameraError && <span>{fps} FPS</span>}
                 <button
+                  onClick={() => setShowDebugPanel((prev) => !prev)}
+                  className={`hover:text-[#FF3B30] transition-colors text-[8px] font-mono ${
+                    showDebugPanel ? "text-[#FF3B30] font-bold" : "text-zinc-500"
+                  }`}
+                  title="Toggle Debug Telemetry Panel"
+                >
+                  [DEBUG]
+                </button>
+                <button
                   onClick={() => setIsGuideOpen(true)}
                   className="hover:text-[#FF3B30] transition-colors text-zinc-400"
                   title="Gesture Guide"
@@ -746,39 +508,89 @@ export default function HandScrollNav({ theme, setTheme }: HandScrollNavProps) {
                 {loadingText && (
                   <div className="absolute inset-0 bg-black/90 flex flex-col items-center justify-center p-3 text-center space-y-1">
                     <div className="w-4 h-4 border border-t-[#FF3B30] border-zinc-800 rounded-full animate-spin"></div>
-                    <span className="text-[8px] font-mono uppercase tracking-widest text-zinc-500">{loadingText}</span>
+                    <span className="text-[8px] font-mono uppercase tracking-widest text-zinc-500">
+                      {loadingText}
+                    </span>
                   </div>
                 )}
 
-                {/* Dynamic UI Debug indicator for easy timing optimization */}
-                {scrollDirection !== "STATIONARY" && (
+                {/* Active Gesture Mode HUD badge */}
+                {debugInfo.handDetected && (
                   <div
                     className={`absolute bottom-1.5 right-1.5 px-2 py-0.5 text-[8px] font-mono uppercase tracking-widest font-bold text-white shadow-md transition-all ${
-                      scrollDirection === "COOLING_DOWN"
-                        ? "bg-amber-600 animate-pulse border border-amber-400"
-                        : scrollDirection.startsWith("SWIPE")
-                        ? "bg-[#FF3B30] border border-[#ff6961]"
-                        : "bg-emerald-650"
+                      debugInfo.gesture === "pinch"
+                        ? "bg-[#FF3B30] border border-[#ff6961] animate-pulse"
+                        : debugInfo.gesture === "scroll"
+                        ? "bg-amber-600 border border-amber-400"
+                        : debugInfo.gesture === "pointer"
+                        ? "bg-emerald-650 border border-emerald-500"
+                        : "bg-zinc-800 border border-zinc-700"
                     }`}
                   >
-                    {scrollDirection === "COOLING_DOWN" && "COOLING DOWN..."}
-                    {scrollDirection === "SWIPE_DETECTED_DOWN" && "SWIPE DETECTED // DOWN"}
-                    {scrollDirection === "SWIPE_DETECTED_UP" && "SWIPE DETECTED // UP"}
+                    {debugInfo.gesture === "pointer" && "POINTER [1 FINGER]"}
+                    {debugInfo.gesture === "pinch" && "PINCH // CLICK"}
+                    {debugInfo.gesture === "scroll" && "SCROLL [3+ FINGERS]"}
+                    {debugInfo.gesture === "idle" && "IDLE"}
                   </div>
                 )}
               </div>
             )}
 
-            {!cameraError && (
-              <div className="text-[8px] font-mono text-zinc-500 leading-normal px-2 bg-black/40 py-1.5 border border-zinc-900">
-                {scrollDirection === "COOLING_DOWN" ? (
-                  <span className="text-amber-500 font-bold">🚫 COOLING DOWN // SWIPE RESET COOLDOWN IN PROGRESS</span>
-                ) : scrollDirection.startsWith("SWIPE") ? (
-                  <span className="text-[#FF3B30] font-bold">🎯 SWIPE DETECTED // EXECUTING FIXED INTERACTION SCROLL</span>
-                ) : handDetected ? (
-                  <span className="text-zinc-400">⚡ SWIPE HAND UP RAPIDLY TO SCROLL DOWN, OR DOWN TO SCROLL UP.</span>
-                ) : (
-                  <span>💡 ALIGN HAND IN FRONT OF WEB CAMERA TO TEST TOUCHLESS NAV.</span>
+            {!cameraError && showDebugPanel && (
+              <div className="text-[8px] font-mono text-zinc-400 leading-normal px-2.5 bg-black/60 py-2 border border-zinc-900 flex flex-col gap-1 select-none">
+                <div className="flex items-center justify-between border-b border-zinc-900 pb-1">
+                  <span className="text-zinc-500 uppercase font-bold tracking-wider">GESTURE ENGINE</span>
+                  <span
+                    className={`px-1 rounded text-[7px] font-bold ${
+                      debugInfo.handDetected ? "bg-emerald-500/20 text-emerald-400" : "bg-zinc-800 text-zinc-500"
+                    }`}
+                  >
+                    {debugInfo.handDetected ? "ONLINE" : "OFFLINE"}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[8px]">
+                  <div className="flex justify-between">
+                    <span className="text-zinc-500">MODE:</span>
+                    <span
+                      className={`font-bold uppercase ${
+                        debugInfo.gesture === "pointer"
+                          ? "text-emerald-400"
+                          : debugInfo.gesture === "pinch"
+                          ? "text-[#FF3B30]"
+                          : debugInfo.gesture === "scroll"
+                          ? "text-amber-400"
+                          : "text-zinc-400"
+                      }`}
+                    >
+                      {debugInfo.gesture}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-zinc-500">FINGERS:</span>
+                    <span className="font-bold text-zinc-300">{debugInfo.fingerCount} EXTENDED</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-zinc-500">CURSOR:</span>
+                    <span className="font-mono text-zinc-300">
+                      {Math.round(debugInfo.cursor.x)}, {Math.round(debugInfo.cursor.y)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-zinc-500">PINCH:</span>
+                    <span
+                      className={`font-bold ${
+                        debugInfo.pinchState === "PINCHING" ? "text-[#FF3B30]" : "text-zinc-400"
+                      }`}
+                    >
+                      {debugInfo.pinchState} ({(debugInfo.pinchRatio * 100).toFixed(0)}%)
+                    </span>
+                  </div>
+                </div>
+                {debugInfo.gesture === "scroll" && Math.abs(debugInfo.scrollDelta) > 0.001 && (
+                  <div className="flex justify-between text-[7.5px] pt-0.5 border-t border-zinc-900/60 text-amber-400">
+                    <span>KINETIC SCROLL:</span>
+                    <span>{debugInfo.scrollDelta > 0 ? "SCROLLING DOWN ↓" : "SCROLLING UP ↑"}</span>
+                  </div>
                 )}
               </div>
             )}
@@ -786,40 +598,8 @@ export default function HandScrollNav({ theme, setTheme }: HandScrollNavProps) {
         )}
       </div>
 
-      {/* High-Contrast Interactive Virtual Mouse Pointer */}
-      {isActive && (
-        <div
-          ref={virtualCursorRef}
-          className={`fixed pointer-events-none z-[9999] rounded-full flex items-center justify-center transition-all duration-150 ${
-            handDetected ? "opacity-100 scale-100" : "opacity-0 scale-50"
-          }`}
-          style={{
-            width: isClicked ? "14px" : (isHovering ? "28px" : "20px"),
-            height: isClicked ? "14px" : (isHovering ? "28px" : "20px"),
-            border: isClicked 
-              ? "3px solid #FF3B30" 
-              : (isHovering ? "2px solid #FF3B30" : "1.5px solid rgba(255, 255, 255, 0.8)"),
-            boxShadow: isClicked
-              ? "0 0 20px #FF3B30, inset 0 0 10px #FF3B30"
-              : (isHovering 
-                ? "0 0 12px rgba(255, 59, 48, 0.8), inset 0 0 6px rgba(255, 59, 48, 0.4)" 
-                : "0 0 6px rgba(0, 0, 0, 0.5)"),
-            backgroundColor: isClicked ? "#FF3B30" : (isHovering ? "rgba(255, 59, 48, 0.15)" : "rgba(0, 0, 0, 0.15)"),
-            top: 0,
-            left: 0,
-            transform: `translate3d(${window.innerWidth / 2}px, ${window.innerHeight / 2}px, 0)`,
-            transition: "width 0.1s ease, height 0.1s ease, border-color 0.1s ease, background-color 0.1s ease",
-            margin: isClicked ? "-7px 0 0 -7px" : (isHovering ? "-14px 0 0 -14px" : "-10px 0 0 -10px"),
-          }}
-        >
-          {/* Inner solid high-precision tracking dot core */}
-          <div 
-            className={`w-1.5 h-1.5 rounded-full ${
-              isClicked ? "bg-white scale-75" : (isHovering ? "bg-[#FF3B30] scale-125" : "bg-white")
-            } transition-all duration-100`}
-          />
-        </div>
-      )}
+      {/* Touchless Virtual Pointer (controlled by HandGestureController) */}
+      {isActive && <div id="hand-cursor" ref={handCursorRef} />}
 
       {/* Futuristic Carbon-Dark Hand Interaction Guide Modal */}
       {isGuideOpen && (
@@ -856,7 +636,6 @@ export default function HandScrollNav({ theme, setTheme }: HandScrollNavProps) {
               {/* Step 1: Cursor movement */}
               <div className="group flex flex-col md:flex-row items-start gap-4 p-3 border border-zinc-900/60 bg-zinc-950/20 hover:border-zinc-800 hover:bg-zinc-950/40 transition-all duration-300">
                 <div className="w-12 h-12 shrink-0 border border-zinc-900 bg-black/40 flex items-center justify-center relative overflow-hidden">
-                  {/* Visual tracking simulation icon */}
                   <div className="absolute inset-0 flex items-center justify-center opacity-30 select-none pointer-events-none">
                     <div className="w-8 h-8 rounded-full border border-dashed border-zinc-700 animate-spin" style={{ animationDuration: '10s' }} />
                   </div>
@@ -864,10 +643,10 @@ export default function HandScrollNav({ theme, setTheme }: HandScrollNavProps) {
                 </div>
                 <div className="flex flex-col gap-1">
                   <h4 className="font-mono text-[10px] uppercase font-bold text-zinc-400 tracking-wider">
-                    01 // NATURAL VIRTUAL CURSOR
+                    01 // ☝️ INDEX FINGER: NATURAL VIRTUAL CURSOR
                   </h4>
                   <p className="text-zinc-300 text-xs leading-relaxed font-sans">
-                    Align your hand in clear view of the camera. The system maps your <strong className="text-[#FF3B30]">Index Finger Tip</strong> (Landmark 8) to physical screen coordinates. Point naturally to move the cursor.
+                    Extend your <strong className="text-[#FF3B30]">Index Finger</strong> with other fingers curled into your palm. The system maps your index fingertip to physical viewport coordinates with edge margin scaling so you can reach all corners comfortably.
                   </p>
                 </div>
               </div>
@@ -875,7 +654,6 @@ export default function HandScrollNav({ theme, setTheme }: HandScrollNavProps) {
               {/* Step 2: Click gesture */}
               <div className="group flex flex-col md:flex-row items-start gap-4 p-3 border border-zinc-900/60 bg-zinc-950/20 hover:border-zinc-800 hover:bg-zinc-950/40 transition-all duration-300">
                 <div className="w-12 h-12 shrink-0 border border-zinc-900 bg-black/40 flex items-center justify-center relative overflow-hidden">
-                  {/* Interactive simulated pinch dot feedback */}
                   <div className="absolute w-6 h-6 rounded-full border border-zinc-850 animate-ping opacity-40" />
                   <div className="flex items-center gap-[1px]">
                     <div className="w-2 h-2 rounded-full bg-[#FF3B30] shadow-[0_0_4px_#FF3B30]" />
@@ -885,27 +663,26 @@ export default function HandScrollNav({ theme, setTheme }: HandScrollNavProps) {
                 </div>
                 <div className="flex flex-col gap-1">
                   <h4 className="font-mono text-[10px] uppercase font-bold text-zinc-400 tracking-wider">
-                    02 // PINCH-TO-CLICK INTERACTION
+                    02 // 🤏 PINCH-TO-CLICK INTERACTION
                   </h4>
                   <p className="text-zinc-300 text-xs leading-relaxed font-sans">
-                    Touch your <strong className="text-[#FF3B30]">Thumb</strong> and <strong className="text-[#FF3B30]">Index Finger</strong> tips together. A tight 3D distance check triggers standard hover clicking, followed by an immediate visual feedback ripple.
+                    While pointing, touch your <strong className="text-[#FF3B30]">Thumb</strong> and <strong className="text-[#FF3B30]">Index Finger</strong> tips together. The cursor freezes in place to neutralize jitter, dispatches a genuine click to the element underneath, and produces an expanding ripple indicator.
                   </p>
                 </div>
               </div>
 
-              {/* Step 3: Swipe gesture */}
+              {/* Step 3: 3+ Finger Scroll gesture */}
               <div className="group flex flex-col md:flex-row items-start gap-4 p-3 border border-zinc-900/60 bg-zinc-950/20 hover:border-zinc-800 hover:bg-zinc-950/40 transition-all duration-300">
                 <div className="w-12 h-12 shrink-0 border border-zinc-900 bg-black/40 flex items-center justify-center relative overflow-hidden flex-col gap-0.5">
-                  {/* Swipe Direction arrows */}
                   <span className="text-[10px] font-bold text-[#FF3B30] animate-bounce">▲</span>
                   <span className="text-[10px] font-bold text-zinc-500 animate-bounce" style={{ animationDelay: '0.2s' }}>▼</span>
                 </div>
                 <div className="flex flex-col gap-1">
                   <h4 className="font-mono text-[10px] uppercase font-bold text-zinc-400 tracking-wider">
-                    03 // EXECUTING KINETIC SCROLLING
+                    03 // 🖐️ 3+ FINGERS: FLUID KINETIC SCROLLING
                   </h4>
                   <p className="text-zinc-300 text-xs leading-relaxed font-sans">
-                    Swipe your hand <strong className="text-zinc-100">UP</strong> rapidly to scroll the page <span className="text-amber-500 font-medium">DOWN</span>, or swipe <strong className="text-zinc-100">DOWN</strong> to scroll <span className="text-amber-500 font-medium">UP</span>. Ensure you wait out the orange cooling rest interval.
+                    Open your hand with <strong className="text-zinc-100">3 or more fingers extended</strong> (e.g. open palm). Moving your hand up or down continuously scrolls the webpage smoothly with deadzone filtering and inertial momentum.
                   </p>
                 </div>
               </div>
