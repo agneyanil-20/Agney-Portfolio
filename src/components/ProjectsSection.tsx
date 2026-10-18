@@ -3,204 +3,159 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from "react";
-import { motion, AnimatePresence, useReducedMotion } from "motion/react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { motion, useMotionValueEvent, useScroll, useTransform, type MotionValue } from "motion/react";
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUpRight } from "lucide-react";
 import { PORTFOLIO_DATA } from "../data/portfolio";
-import { ArrowUpRight } from "lucide-react";
-import { Project } from "../types";
+import type { Project } from "../types";
+import "./ProjectsSection.css";
+
+const desiredOrder = ["luxe-moto", "speeki-ai", "cntrl-m", "sound-sketchbook", "photobooth", "neeli"];
+const projects = [...PORTFOLIO_DATA.projects].sort((a, b) => {
+  const rank = (id: string) => desiredOrder.includes(id) ? desiredOrder.indexOf(id) : desiredOrder.length;
+  return rank(a.id) - rank(b.id);
+});
+const colors = ["#d6cfc5", "#c5d1df", "#ff493e", "#daddcc", "#dbd1e0", "#242c2d"];
+
+function ProjectCard({ project, index, progress, animated, onFocus }: {
+  project: Project;
+  index: number;
+  progress: MotionValue<number>;
+  animated: boolean;
+  onFocus: () => void;
+}) {
+  const center = index / Math.max(1, projects.length - 1);
+  const y = useTransform(progress, [center - 0.3, center, center + 0.3], [24, 0, -24]);
+  const imageY = useTransform(progress, [center - 0.3, center + 0.3], ["-3%", "3%"]);
+  const palette = index % colors.length;
+  const style = {
+    "--card-color": colors[palette],
+    "--card-ink": palette === colors.length - 1 ? "#f7f7f9" : "#121212",
+    "--card-offset": index % 2 ? "18px" : "0px",
+    y: animated ? y : 0,
+  } as CSSProperties & { y: MotionValue<number> | number };
+
+  const content = <>
+    <div className="floating-work-image">
+      <motion.img
+        src={project.imageUrl}
+        alt={project.title}
+        referrerPolicy="no-referrer"
+        draggable={false}
+        decoding="async"
+        style={{ y: animated ? imageY : 0 }}
+      />
+      <div className="floating-work-open" aria-hidden="true"><ArrowUpRight size={24} /></div>
+    </div>
+    <div className="floating-work-info">
+      <div className="floating-work-meta">
+        <span>{String(index + 1).padStart(2, "0")} / {String(projects.length).padStart(2, "0")}</span>
+        <span>{project.year}</span>
+      </div>
+      <div className="floating-work-title">
+        <h3>{project.title}</h3>
+        <p>{project.category}</p>
+      </div>
+      <p className="floating-work-description">{project.description || project.tagline}</p>
+    </div>
+  </>;
+
+  return <motion.article className="floating-work-card" style={style} aria-labelledby={`work-${project.id}`}>
+    {project.projectUrl ? <a
+      id={`work-${project.id}`}
+      href={project.projectUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label={`Visit ${project.title} website (opens in a new tab)`}
+      data-cursor="interactive"
+      onFocus={onFocus}
+    >{content}</a> : <div id={`work-${project.id}`}>{content}</div>}
+  </motion.article>;
+}
 
 export default function ProjectsSection() {
-  const shouldReduceMotion = useReducedMotion();
+  const sectionRef = useRef<HTMLElement>(null);
+  const viewportRef = useRef<HTMLDivElement>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
+  const [animated, setAnimated] = useState(false);
+  const [geometry, setGeometry] = useState({ distance: 0, height: 0 });
+  const [active, setActive] = useState(0);
+  const { scrollYProgress } = useScroll({ target: sectionRef, offset: ["start start", "end end"] });
+  const x = useTransform(scrollYProgress, [0, 1], [0, -geometry.distance]);
 
-  // Ordered projects strictly matching prompt specification:
-  // 01 Luxe Moto, 02 Speeki AI, 03 Cntrl M, 04 Sound Sketchbook, 05 Photobooth, 06 Neeli
-  const projectsList: Project[] = React.useMemo(() => {
-    const rawList = PORTFOLIO_DATA.projects || [];
-    const desiredOrder = ["luxe-moto", "speeki-ai", "cntrl-m", "sound-sketchbook", "photobooth", "neeli"];
-    
-    const ordered: Project[] = [];
-    desiredOrder.forEach((id) => {
-      const found = rawList.find((p) => p.id === id);
-      if (found) ordered.push(found);
-    });
-
-    rawList.forEach((p) => {
-      if (!ordered.some((o) => o.id === p.id)) {
-        ordered.push(p);
-      }
-    });
-
-    return ordered;
+  useEffect(() => {
+    // Small windows and reduced-motion settings use normal document flow.
+    const query = window.matchMedia("(min-width: 900px) and (min-height: 700px) and (prefers-reduced-motion: no-preference)");
+    const update = () => setAnimated(query.matches && projects.length > 1);
+    update();
+    query.addEventListener("change", update);
+    return () => query.removeEventListener("change", update);
   }, []);
 
-  const [activeProjectId, setActiveProjectId] = useState<string>(() => projectsList[0]?.id || "luxe-moto");
+  useEffect(() => {
+    if (!animated || !trackRef.current || !viewportRef.current) return;
+    const measure = () => {
+      const track = trackRef.current;
+      const viewport = viewportRef.current;
+      if (!track || !viewport) return;
+      setGeometry({ distance: Math.max(0, track.scrollWidth - viewport.clientWidth), height: viewport.clientHeight });
+    };
+    const observer = new ResizeObserver(measure);
+    observer.observe(trackRef.current);
+    observer.observe(viewportRef.current);
+    measure();
+    return () => observer.disconnect();
+  }, [animated]);
 
-  const activeProject = React.useMemo(() => {
-    return projectsList.find((p) => p.id === activeProjectId) || projectsList[0];
-  }, [projectsList, activeProjectId]);
+  useMotionValueEvent(scrollYProgress, "change", (value) => {
+    setActive(Math.round(value * Math.max(0, projects.length - 1)));
+  });
 
-  return (
-    <section 
-      id="projects" 
-      className="w-full bg-transparent text-white px-6 md:px-12 lg:px-16 py-20 md:py-28 overflow-hidden relative"
-    >
-      <div className="max-w-[1150px] mx-auto w-full flex flex-col">
-        
-        {/* Section Header: Minimalist Editorial Title */}
-        <div className="flex items-baseline gap-3 md:gap-4 mb-10 md:mb-14">
-          <h2 className="font-display text-4xl md:text-6xl font-bold tracking-tight text-white">
-            Works
-          </h2>
-          <span className="font-mono text-xs md:text-sm text-zinc-500 uppercase tracking-widest">
-            (SELECTED WORKS)
-          </span>
+  const goToProject = (index: number, behavior: ScrollBehavior = "smooth") => {
+    const section = sectionRef.current;
+    if (!animated || !section || !geometry.distance) return;
+    const progress = Math.max(0, Math.min(projects.length - 1, index)) / Math.max(1, projects.length - 1);
+    window.scrollTo({ top: section.getBoundingClientRect().top + window.scrollY + progress * geometry.distance, behavior });
+  };
+
+  return <section
+    id="projects"
+    ref={sectionRef}
+    className={`floating-works${animated ? " floating-works-animated" : ""}`}
+    aria-labelledby="works-heading"
+    style={animated && geometry.height ? { height: geometry.height + geometry.distance } : undefined}
+  >
+    <div className="floating-works-viewport" ref={viewportRef}>
+      <header className="floating-works-header">
+        <div className="floating-works-heading"><h2 id="works-heading">Works</h2><span>(SELECTED WORKS)</span></div>
+        {animated && <p className="floating-works-hint">Scroll to explore <ArrowDown size={14} /></p>}
+      </header>
+      <motion.div className="floating-works-track" ref={trackRef} style={{ x: animated ? x : 0 }}>
+        {projects.map((project, index) => <ProjectCard
+          key={project.id}
+          project={project}
+          index={index}
+          progress={scrollYProgress}
+          animated={animated}
+          onFocus={() => goToProject(index, "instant")}
+        />)}
+      </motion.div>
+      {animated && <nav className="floating-works-nav" aria-label="Browse selected works">
+        <div className="floating-works-index">
+          {projects.map((project, index) => <button
+            key={project.id}
+            type="button"
+            aria-label={`Show ${project.title}`}
+            aria-current={active === index ? "step" : undefined}
+            onClick={() => goToProject(index)}
+            data-cursor="interactive"
+          >{String(index + 1).padStart(2, "0")}</button>)}
         </div>
-
-        {/* Two-Column Interactive Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-start">
-          
-          {/* Left Column: Numbered Project List (approx 38% width) - Clean typography without lines */}
-          <div className="lg:col-span-5 flex flex-col">
-            {projectsList.map((project, idx) => {
-              const isActive = project.id === activeProject?.id;
-              const formattedNum = String(idx + 1).padStart(2, "0");
-
-              return (
-                <div
-                  key={project.id}
-                  onClick={() => setActiveProjectId(project.id)}
-                  onMouseEnter={() => setActiveProjectId(project.id)}
-                  className="group relative flex items-center justify-between py-3 md:py-3.5 cursor-pointer transition-colors duration-200 select-none"
-                  data-cursor="interactive"
-                >
-                  {/* Subtle Vertical Active Indicator on Far Left */}
-                  <div 
-                    className={`absolute -left-3 md:-left-4 top-2 bottom-2 w-[2.5px] rounded-full transition-all duration-300 ${
-                      isActive 
-                        ? "bg-white opacity-100 scale-y-100" 
-                        : "bg-zinc-600 opacity-0 scale-y-50 group-hover:opacity-40 group-hover:scale-y-75"
-                    }`}
-                  />
-
-                  {/* Number + Title */}
-                  <div className="flex items-baseline gap-3 md:gap-4">
-                    <span className={`font-mono text-xs md:text-sm tracking-tight transition-colors duration-200 ${
-                      isActive ? "text-zinc-400 font-medium" : "text-zinc-600 group-hover:text-zinc-400"
-                    }`}>
-                      ({formattedNum})
-                    </span>
-
-                    <span className={`font-sans text-xl md:text-2xl tracking-tight transition-colors duration-200 ${
-                      isActive 
-                        ? "text-white font-semibold" 
-                        : "text-zinc-500 font-normal group-hover:text-zinc-300"
-                    }`}>
-                      {project.title}
-                    </span>
-                  </div>
-
-                  {/* Subtle year metadata on hover/active */}
-                  <div className="pl-2">
-                    <span className={`font-mono text-[10px] uppercase tracking-wider transition-all duration-200 ${
-                      isActive ? "text-zinc-400 opacity-100" : "text-zinc-600 opacity-0 group-hover:opacity-70"
-                    }`}>
-                      {project.year}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Right Column: Large Project Preview (approx 62% width) */}
-          <div className="lg:col-span-7 flex flex-col">
-            {activeProject && (
-              <div className="flex flex-col gap-5 w-full">
-                
-                {/* Stable Image Preview Container with Seamless Overlapping Blur-in / Blur-out Layers */}
-                <div className="relative w-full aspect-[16/10] rounded-2xl overflow-hidden bg-zinc-900/90 border border-zinc-800/60 shadow-lg">
-                  <AnimatePresence initial={false}>
-                    <motion.div
-                      key={activeProject.id}
-                      className="absolute inset-0 w-full h-full origin-center will-change-[filter,opacity,transform]"
-                      initial={
-                        shouldReduceMotion 
-                          ? { opacity: 0 } 
-                          : { filter: "blur(12px)", opacity: 0, scale: 0.98 }
-                      }
-                      animate={
-                        shouldReduceMotion 
-                          ? { opacity: 1 } 
-                          : { filter: "blur(0px)", opacity: 1, scale: 1 }
-                      }
-                      exit={
-                        shouldReduceMotion 
-                          ? { opacity: 0 } 
-                          : { filter: "blur(12px)", opacity: 0, scale: 0.98 }
-                      }
-                      transition={{
-                        duration: shouldReduceMotion ? 0.15 : 0.6,
-                        ease: [0.22, 1, 0.36, 1],
-                      }}
-                    >
-                      <img
-                        src={activeProject.imageUrl}
-                        alt={activeProject.title}
-                        referrerPolicy="no-referrer"
-                        className="w-full h-full object-cover object-center"
-                        draggable={false}
-                      />
-                    </motion.div>
-                  </AnimatePresence>
-                </div>
-
-                {/* Restrained Project Information with Smooth Content Transition */}
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={activeProject.id}
-                    initial={{ opacity: 0, y: 6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -6 }}
-                    transition={{ duration: 0.25, ease: "easeOut" }}
-                    className="flex flex-col gap-2.5 pt-2"
-                  >
-                    <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1 border-b border-zinc-800/40 pb-2">
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-display text-xl md:text-2xl font-bold tracking-tight text-white uppercase">
-                          {activeProject.title}
-                        </h3>
-                        {activeProject.projectUrl && (
-                          <a
-                            href={activeProject.projectUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            aria-label={`Visit ${activeProject.title} website`}
-                            className="inline-flex items-center text-zinc-400 hover:text-white transition-colors duration-300 group/arrow focus:outline-none p-0.5"
-                            data-cursor="interactive"
-                          >
-                            <ArrowUpRight className="w-5 h-5 text-zinc-400 group-hover/arrow:text-white transition-all duration-300 ease-out group-hover/arrow:translate-x-0.5 group-hover/arrow:-translate-y-0.5" />
-                          </a>
-                        )}
-                      </div>
-                      <div className="font-mono text-xs text-zinc-500 tracking-wider">
-                        <span>{activeProject.category}</span>
-                        <span className="mx-2 text-zinc-700">/</span>
-                        <span>{activeProject.year}</span>
-                      </div>
-                    </div>
-
-                    <p className="text-zinc-400 font-sans text-xs md:text-sm font-light leading-relaxed max-w-xl">
-                      {activeProject.description || activeProject.tagline}
-                    </p>
-                  </motion.div>
-                </AnimatePresence>
-              </div>
-            )}
-          </div>
-
+        <div className="floating-works-arrows">
+          <button type="button" onClick={() => goToProject(active - 1)} disabled={active === 0} aria-label="Previous project" data-cursor="interactive"><ArrowLeft size={19} /></button>
+          <button type="button" onClick={() => goToProject(active + 1)} disabled={active === projects.length - 1} aria-label="Next project" data-cursor="interactive"><ArrowRight size={19} /></button>
         </div>
-
-      </div>
-    </section>
-  );
+      </nav>}
+    </div>
+  </section>;
 }

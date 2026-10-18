@@ -15,7 +15,8 @@ html, body, #root {
   margin: 0;
   padding: 0;
   width: 100%;
-  overflow-x: hidden;
+  /* Clip overflow without creating a scroll container that breaks sticky sections. */
+  overflow-x: clip;
   font-family: var(--font-sans);
   scroll-behavior: smooth;
 }
