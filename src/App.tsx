@@ -47,6 +47,8 @@ export default function App() {
       root.classList.remove("light");
     }
     localStorage.setItem("portfolio-theme-v2", theme);
+    root.style.colorScheme = theme;
+    document.querySelector('meta[name="theme-color"]')?.setAttribute("content", theme === "light" ? "#f7f7f9" : "#000000");
   }, [theme]);
 
   // Dynamic document title based on section in view
@@ -85,6 +87,7 @@ export default function App() {
 
   return (
     <div id="app-canvas" className="relative min-h-screen bg-black bg-dot-grid text-white selection:bg-[#FF3B30] selection:text-white transition-colors duration-500">
+      <a href="#projects" className="skip-to-works">Skip to works</a>
       {/* Subtle Analog Grain Noise Overlay */}
       <NoiseBackground />
 
